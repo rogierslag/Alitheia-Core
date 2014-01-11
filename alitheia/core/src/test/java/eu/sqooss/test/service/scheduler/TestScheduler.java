@@ -35,23 +35,23 @@ public class TestScheduler {
 
     @Test(expected=SchedulerException.class)
     public void TestCircularDependency1() throws Exception {
-    	TestJob j1 = new TestJob(0, "circular1");
+    	TestJobObject j1 = new TestJobObject(0, "circular1");
     	j1.addDependency(j1);
     }
     
     @Test(expected=SchedulerException.class)
     public void TestCircularDependency2() throws Exception {
-    	TestJob j1 = new TestJob(0, "circular1");
-    	TestJob j2 = new TestJob(3, "circular2");
+    	TestJobObject j1 = new TestJobObject(0, "circular1");
+    	TestJobObject j2 = new TestJobObject(3, "circular2");
     	j1.addDependency(j2);
     	j2.addDependency(j1);
     }
     
     @Test(expected=SchedulerException.class)
     public void TestCircularDependency3() throws Exception {
-    	TestJob j1 = new TestJob(4, "circular1");
-    	TestJob j2 = new TestJob(5, "circular2");
-    	TestJob j3 = new TestJob(6, "circular3");
+    	TestJobObject j1 = new TestJobObject(4, "circular1");
+    	TestJobObject j2 = new TestJobObject(5, "circular2");
+    	TestJobObject j3 = new TestJobObject(6, "circular3");
     	j1.addDependency(j2);
     	j2.addDependency(j3);
     	j3.addDependency(j1);
@@ -59,9 +59,9 @@ public class TestScheduler {
     
     @Test
     public void TestCircularDependency4() throws Exception {
-    	TestJob j1 = new TestJob(4, "circular1");
-    	TestJob j2 = new TestJob(5, "circular2");
-    	TestJob j3 = new TestJob(6, "circular3");
+    	TestJobObject j1 = new TestJobObject(4, "circular1");
+    	TestJobObject j2 = new TestJobObject(5, "circular2");
+    	TestJobObject j3 = new TestJobObject(6, "circular3");
     	j1.addDependency(j2);
     	j2.addDependency(j3);
     	assertEquals(true,j2.dependsOn(j3));
@@ -70,19 +70,19 @@ public class TestScheduler {
     @Test
     public void TestJobYield() throws Exception {
     	assertEquals(0, sched.getSchedulerStats().getTotalJobs());
-        TestJob j1 = new TestJob(10, "Test");
+        TestJobObject j1 = new TestJobObject(10, "Test");
         sched.enqueue(j1);
         assertEquals(1, sched.getSchedulerStats().getTotalJobs());
-        TestJob j2 = new TestJob(10, "Test");
+        TestJobObject j2 = new TestJobObject(10, "Test");
         sched.enqueue(j2);
         assertEquals(2, sched.getSchedulerStats().getTotalJobs());
-        TestJob j3 = new TestJob(10, "Test");
+        TestJobObject j3 = new TestJobObject(10, "Test");
         sched.enqueue(j3);
         assertEquals(3, sched.getSchedulerStats().getTotalJobs());
-        TestJob j4 = new TestJob(10, "Test");
+        TestJobObject j4 = new TestJobObject(10, "Test");
         sched.enqueue(j4);
         assertEquals(4, sched.getSchedulerStats().getTotalJobs());
-        TestJob j5 = new TestJob(10, "Test");
+        TestJobObject j5 = new TestJobObject(10, "Test");
         sched.enqueue(j5);
         assertEquals(5, sched.getSchedulerStats().getTotalJobs());
     }
