@@ -215,8 +215,15 @@ public abstract class Job implements Comparable<Job> {
      * @throws Exception
      */
     final public long execute() throws Exception {
-        DBService dbs = AlitheiaCore.getInstance().getDBService();
-        long timer = System.currentTimeMillis();
+    	DBService dbs;
+    	long timer;
+    	try {
+    		dbs = AlitheiaCore.getInstance().getDBService();
+    		timer = System.currentTimeMillis();
+    	} catch (Exception e) {
+    		e.printStackTrace();
+    		throw e;
+    	}
         try {
             setState(State.Running);
             restart();

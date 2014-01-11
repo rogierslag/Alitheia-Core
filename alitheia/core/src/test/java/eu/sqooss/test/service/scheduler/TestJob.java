@@ -33,6 +33,8 @@
 
 package eu.sqooss.test.service.scheduler;
 
+import java.util.Random;
+
 import eu.sqooss.service.scheduler.Job;
 
 /**
@@ -61,9 +63,10 @@ class TestJob extends Job
     
     protected void run() throws Exception {
         System.out.println("Testjob running!");
-        for (int i = 0; i < n; ++i) {   
-            Thread.sleep(500);
-            System.out.println(s);
+        Random r = new Random();
+        for (int i = 0; i < n; ++i) {  
+        	int j = Math.abs(r.nextInt() % 1000);
+        	Thread.sleep(j);
         }
         System.out.println("Testjob finished!");
     }
