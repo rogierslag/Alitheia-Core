@@ -2,6 +2,9 @@ package eu.sqooss.test.service.scheduler;
 
 import static org.junit.Assert.assertEquals;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -9,6 +12,7 @@ import org.junit.Test;
 import static org.junit.Assert.fail;
 import eu.sqooss.core.AlitheiaCore;
 import eu.sqooss.impl.service.scheduler.SchedulerServiceImpl;
+import eu.sqooss.service.scheduler.Job;
 import eu.sqooss.service.scheduler.SchedulerException;
 import eu.sqooss.service.tds.InvalidAccessorException;
 
@@ -23,14 +27,15 @@ public class TestScheduler {
     	} catch (Exception e) {
     		// Yeah this blows. But is works
     	}
-    	sched = new SchedulerServiceImpl();
     }
     
     @Test
     public void TestExecutionThreads() throws Exception {
-    	assertEquals(0,sched.getSchedulerStats().getWorkerThreads());
+    	sched = new SchedulerServiceImpl();
+        assertEquals(0,sched.getSchedulerStats().getWorkerThreads());
         sched.startExecute(2);
         assertEquals(2,sched.getSchedulerStats().getWorkerThreads());
+        sched.shutDown();
     }
 
     @Test(expected=SchedulerException.class)
@@ -69,7 +74,8 @@ public class TestScheduler {
     
     @Test
     public void TestJobYield() throws Exception {
-    	assertEquals(0, sched.getSchedulerStats().getTotalJobs());
+    	sched = new SchedulerServiceImpl();
+        assertEquals(0, sched.getSchedulerStats().getTotalJobs());
         TestJobObject j1 = new TestJobObject(10, "Test");
         sched.enqueue(j1);
         assertEquals(1, sched.getSchedulerStats().getTotalJobs());
@@ -85,15 +91,25 @@ public class TestScheduler {
         TestJobObject j5 = new TestJobObject(10, "Test");
         sched.enqueue(j5);
         assertEquals(5, sched.getSchedulerStats().getTotalJobs());
+        sched.shutDown();
+    }
+    
+    @Test
+    public void TestScheduleEnqueue() throws Exception {
+    	sched = new SchedulerServiceImpl();
+    	sched.startExecute(1);
+    	assertEquals(0,sched.getSchedulerStats().getTotalJobs());
+    	TestJobObject tb1 = new TestJobObject(0, null);
+    	HashSet<Job> alj = new HashSet<Job>(1);
+    	alj.add(tb1);
+    	sched.enqueueNoDependencies(alj);
+    	assertEquals(1, sched.getSchedulerStats().getTotalJobs());
+    	sched.shutDown();
+    	
     }
     
     @AfterClass
     public static void tearDown() {
-        while (sched.getSchedulerStats().getFinishedJobs() < 4)
-            try {
-                Thread.sleep(500);
-            } catch (InterruptedException e) {}
-            
-        sched.stopExecute();
+        
     }
 }

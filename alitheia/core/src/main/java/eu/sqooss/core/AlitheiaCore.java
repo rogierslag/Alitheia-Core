@@ -43,16 +43,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.osgi.framework.Bundle;
+import org.eclipse.gemini.blueprint.mock.MockBundleContext;
+import org.eclipse.gemini.blueprint.mock.MockServiceReference;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.BundleException;
-import org.osgi.framework.BundleListener;
-import org.osgi.framework.Filter;
-import org.osgi.framework.FrameworkListener;
 import org.osgi.framework.InvalidSyntaxException;
-import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.osgi.framework.ServiceRegistration;
 
 import eu.sqooss.impl.service.admin.AdminServiceImpl;
 import eu.sqooss.impl.service.cluster.ClusterNodeServiceImpl;
@@ -176,26 +171,27 @@ public class AlitheiaCore {
     
     /*Create a temp instance to use for testing.*/
     public static AlitheiaCore testInstance() {
-//    	reference = new MockServiceReference();
-//    	bundleContext = new MockBundleContext() {
-//
-//    		public ServiceReference getServiceReference(String clazz) {
-//    			return reference;
-//    		}
-//
-//    		public ServiceReference[] getServiceReferences(String clazz, String filter) 
-//    				throws InvalidSyntaxException {
-//    			return new ServiceReference[] { reference };
-//    		}
-//    		
-//    		public Object getService(ServiceReference ref) {
-//    		    if (reference == ref)
-//    		       return service;
-//    		    return super.getService(ref);
-//    		}
-//    	};
-//    	instance = new AlitheiaCore(bundleContext);
     	instance = new AlitheiaCore(null);
+    	reference = new MockServiceReference();
+    	bundleContext = new MockBundleContext() {
+
+    		public ServiceReference getServiceReference(String clazz) {
+    			return reference;
+    		}
+
+    		public ServiceReference[] getServiceReferences(String clazz, String filter) 
+    				throws InvalidSyntaxException {
+    			return new ServiceReference[] { reference };
+    		}
+    		
+    		public Object getService(ServiceReference ref) {
+    		    if (reference == ref)
+    		       return service;
+    		    return super.getService(ref);
+    		}
+    	};
+
+        instance = new AlitheiaCore(bundleContext);
         return instance;
     }
     
@@ -233,7 +229,6 @@ public class AlitheiaCore {
      * block the instatiation process).
      */
     private void init() {
-
         err("Required services online, initialising");
 
         logger = new LogManagerImpl();

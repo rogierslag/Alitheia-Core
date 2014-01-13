@@ -15,8 +15,8 @@ import eu.sqooss.service.scheduler.WorkerThread;
 import eu.sqooss.test.service.scheduler.TestJobObject;
 
 public class TestJob {
-    
-    static SchedulerServiceImpl sched;
+
+	static SchedulerServiceImpl sched;
     
     @BeforeClass
     public static void setUp() {

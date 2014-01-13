@@ -33,56 +33,34 @@
 
 package eu.sqooss.test.service.scheduler;
 
-import java.util.Random;
-
 import eu.sqooss.service.scheduler.Job;
 
 /**
  * This a test job class.
- * It has the holy purpuse to print a string n times.
+ * Its purpose is to fail when ran.
  *
- * @author Christoph Schleifenbaum
+ * @author Joost Naaijen
  */
-class TestJobObject extends Job
+class FailingJob extends Job
 {
 
-    private int n;
     private String s;
-    private long priority;
 
     /**
-     * Contructor creating a job printing string \a s \a n times.
+     * Create a failing job with string s
      */
-    public TestJobObject(int n, String s) {
-        this.n = n;
+    public FailingJob(String s) {
         this.s = s;
-    }
-    
-    public TestJobObject(int n, String s, long prio) {
-    	this.n = n;
-    	this.s = s;
-    	this.priority = prio;
     }
 
     public long priority() {
-        return this.priority;
+        return 0;
     }
     
     protected void run() throws Exception {
-        System.out.println("Testjob running!");
-        Random r = new Random();
-        for (int i = 0; i < n; ++i) {  
-        	int j = Math.abs(r.nextInt() % 100);
-        	Thread.sleep(j);
-        }
-        System.out.println("Testjob finished!");
-    }
-    
-    public void stateChange(State s) {
-    	this.setState(s);
-    }
-    
-    public String toString() {
-    	return this.s;	
+//        System.out.println("Testjob running!");
+        Thread.sleep(100);
+//        System.out.println("Failing the job");
+        throw new InterruptedException("Job "+s+" fails!");
     }
 }

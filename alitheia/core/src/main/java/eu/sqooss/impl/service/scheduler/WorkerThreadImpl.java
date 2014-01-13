@@ -46,7 +46,7 @@ import eu.sqooss.service.scheduler.WorkerThread;
  *
  * @author Christoph Schleifenbaum
  */
-class WorkerThreadImpl extends Thread implements WorkerThread {
+ class WorkerThreadImpl extends Thread implements WorkerThread {
     private static final String PERF_LOG_PROPERTY = "eu.sqooss.log.perf";
     
     private boolean perfLog = false;
@@ -89,8 +89,9 @@ class WorkerThreadImpl extends Thread implements WorkerThread {
         m_processing = true;
         while (m_processing) {
             try {
-                // get a job from the scheduler
-                executeJob(m_scheduler.takeJob());
+            	Job job = m_scheduler.takeJob();
+            	// get a job from the scheduler
+                executeJob(job);
             } catch (InterruptedException e) {
                 // we were interrupted, just try again
                 continue;
@@ -119,7 +120,7 @@ class WorkerThreadImpl extends Thread implements WorkerThread {
 		try {
 			m_job = j;
 			if (m_job.state() == Job.State.Yielded) {
-			    time = m_job.resume();
+				time = m_job.resume();
 			} else { 
 			    time = m_job.execute();
 			}
@@ -127,6 +128,7 @@ class WorkerThreadImpl extends Thread implements WorkerThread {
 		    AlitheiaCore.getInstance().getLogManager().createLogger(
 		            Logger.NAME_SQOOSS_SCHEDULING).error("Job " + j + " is not resumable");
 		} catch (Exception e) {
+			e.printStackTrace();
 			// no error handling needed here, the job
 			// itself takes care of that.
 		} finally {
