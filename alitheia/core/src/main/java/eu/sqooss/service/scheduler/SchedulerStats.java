@@ -107,14 +107,13 @@ public class SchedulerStats {
     }
     
     public synchronized void removeWaitingJob(String classname) {
-        this.waitingJobs --;
+    	this.waitingJobs --;
         if (waitingJobTypes.containsKey(classname)) {
             int jobs = waitingJobTypes.get(classname) - 1;
             if (jobs == 0) {
                 waitingJobTypes.remove(classname);
             }
-            
-            waitingJobTypes.put(classname, jobs);
+            waitingJobTypes.put(classname, jobs); // This should probably be put before the optional removal since it makes no sense atm
         }
     }
  
