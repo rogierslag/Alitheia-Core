@@ -341,6 +341,7 @@ public abstract class Job implements Comparable<Job> {
                 try {
                     wait();
                 } catch (InterruptedException e) {
+                	e.printStackTrace();
                 }
             }
         }

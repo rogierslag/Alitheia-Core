@@ -19,7 +19,12 @@ public class TestJob {
     static SchedulerServiceImpl sched;
     
     @BeforeClass
-    public static void setUp() {}
+    public static void setUp() {
+    	try {
+    		AlitheiaCore.testInstance();
+    	} catch (Exception e) {}
+    	sched = new SchedulerServiceImpl();
+    }
 	
 	@Test
 	public void TestStateGetter() {
@@ -104,27 +109,47 @@ public class TestJob {
 		
 	}
 	
-//	@Test
-//	public void TestRunning() throws SchedulerException {
-//		TestJobObject tb1 = new TestJobObject(1, null);
-//		assertEquals(Job.State.Created, tb1.state());
-//		
-//		tb1.waitForFinished();
-//		assertEquals(Job.State.Finished, tb1.state());
-//		
-//		try { 
-//			AlitheiaCore.testInstance();
-//		} catch (Exception e) {}
-//		
-//		SchedulerServiceImpl sched = new SchedulerServiceImpl();
-//		sched.startUp();
-//		sched.startExecute(1);
+	@Test
+	public void TestRunning() throws SchedulerException {
+		TestJobObject tb1 = new TestJobObject(1, null);
+		assertEquals(Job.State.Created, tb1.state());
+		
+		sched.startExecute(1);
+		sched.enqueue(tb1);
+		assertEquals(sched,tb1.getScheduler());
+		
+		tb1.waitForFinished();
+		assertEquals(Job.State.Finished, tb1.state());
+		
+		tb1 = new TestJobObject(1, null);
+		assertEquals(Job.State.Created, tb1.state());
+		sched.enqueue(tb1);
+		while(tb1.state().equals(Job.State.Queued) || tb1.state().equals(Job.State.Running) ) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				fail("Error while testing");
+			}
+		}
+		assertEquals(Job.State.Finished, tb1.state());
+		sched.shutDown();
+		
+//		sched.startExecute(4);
 //		tb1 = new TestJobObject(1, null);
-//		assertEquals(Job.State.Created, tb1.state());
+//		TestJobObject tb2 = new TestJobObject(1, null);
+//		sched.enqueue(tb2);
 //		sched.enqueue(tb1);
-//		assertEquals(Job.State.Finished, tb1.state());
-//		sched.shutDown();
-//	}
+//		assertEquals(1,sched.getSchedulerStats().getIdleWorkerThreads());
+//		tb1.waitForFinished();
+//		while(tb2.state().equals(Job.State.Queued) || tb2.state().equals(Job.State.Running) ) {
+//			try {
+//				Thread.sleep(100);
+//			} catch (InterruptedException e) {
+//				fail("Error while testing");
+//			}
+//		}
+		assertEquals(Job.State.Finished, tb1.state());
+	}
 	
 	@Test
 	public void TestThreads() throws Exception {
