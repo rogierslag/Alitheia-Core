@@ -331,7 +331,7 @@ public abstract class Job implements Comparable<Job> {
             // if something went wrong with taking the job
             // ok - we might be stuck...
             if (m_scheduler.getSchedulerStats().getIdleWorkerThreads() == 0) {
-                m_scheduler.startOneShotWorkerThread();
+//                m_scheduler.startOneShotWorkerThread();
             }
         }
         synchronized (this) {
@@ -431,7 +431,7 @@ public abstract class Job implements Comparable<Job> {
         }
 
         if (m_scheduler != null) {
-            m_scheduler.jobStateChanged(this, s);
+//            m_scheduler.jobStateChanged(this, s);
         }
         
         stateChanged(m_state);
