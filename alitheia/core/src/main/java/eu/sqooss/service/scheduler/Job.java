@@ -43,6 +43,8 @@ import java.lang.Comparable;
 import java.lang.InterruptedException;
 
 import eu.sqooss.core.AlitheiaCore;
+import eu.sqooss.impl.service.scheduler.DependencyManager;
+import eu.sqooss.impl.service.scheduler.SchedulerServiceImpl;
 import eu.sqooss.service.util.Pair;
 
 import eu.sqooss.service.db.DBService;
@@ -132,6 +134,7 @@ public abstract class Job implements Comparable<Job> {
      * This job cannot be executed, as long \a other
      * is not finished.
      */
+    @Deprecated
     public final synchronized void addDependency(Job other) throws SchedulerException {
         // Dependencies of jobs can ony be changed before the job is queued.
         // Otherwise, race conditions would occur in which it would be undefined
@@ -160,6 +163,7 @@ public abstract class Job implements Comparable<Job> {
      * Removes a dependency.
      * \sa addDependency
      */
+    @Deprecated
     public final void removeDependency(Job other) {
         if (m_dependencies == null)
             return;
@@ -177,11 +181,14 @@ public abstract class Job implements Comparable<Job> {
     }
 
     /**
-     * Checks recursive whether this job depends on job \a other.
+     * Look in the {@link DependencyManager} of the {@link SchedulerServiceImpl} to which this
+     * job belongs if this job and another depend on each other.
      * @param other the job to check dependency of.
      * @return true, when the job depends on \a other, otherwise false.
      */
+    @Deprecated
     public final boolean dependsOn(Job other) {
+//    	return m_scheduler.getDependencyManager().dependOnEachOther(this, other);
         if (m_dependencies == null)
             return false;
         synchronized(m_dependencies) {
@@ -195,7 +202,8 @@ public abstract class Job implements Comparable<Job> {
             return false;
         }
     }
-
+    
+    @Deprecated
     private final synchronized void addDependee(Job other) {
         if (m_dependees == null)
             m_dependees = new ArrayList<Job>();
@@ -204,6 +212,7 @@ public abstract class Job implements Comparable<Job> {
         }
     }
     
+    @Deprecated
     private final synchronized void removeDependee(Job other) {
         if (m_dependees == null)
             return;
@@ -238,16 +247,18 @@ public abstract class Job implements Comparable<Job> {
             if (dbs.isDBSessionActive()) {
                 dbs.rollbackDBSession();
                 setState(State.Error); //No uncommitted sessions are tolerated
+                System.out.println("Job not finished correctly");
             } else {
                 if (state() != State.Yielded)
                     setState(State.Finished);
+                System.out.println("Job succesfully finished");
             }   
         } catch(Exception e) {
             
             if (dbs.isDBSessionActive()) {
                 dbs.rollbackDBSession();
             }
-            
+            System.out.println("Job ended in error");
             // In case of an exception, state becomes Error
             m_errorException = e;
             setState(State.Error);
@@ -300,6 +311,7 @@ public abstract class Job implements Comparable<Job> {
     /**
      * @return All unfinished jobs this job depends on.
      */
+    @Deprecated
     public final List<Job> dependencies() {
         if (m_dependencies == null)
             return Collections.EMPTY_LIST;
@@ -458,6 +470,7 @@ public abstract class Job implements Comparable<Job> {
      * If the job is queued to a scheduler, this methods tells the scheduler,
      * that the job's dependencies have changed.
      */
+    @Deprecated
     protected final void callDependenciesChanged() {
         if (m_scheduler != null) {
             m_scheduler.jobDependenciesChanged(this);

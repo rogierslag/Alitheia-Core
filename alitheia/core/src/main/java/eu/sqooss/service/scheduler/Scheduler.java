@@ -34,10 +34,10 @@
 package eu.sqooss.service.scheduler;
 
 import java.util.Deque;
-import java.util.List;
 import java.util.Set;
 
 import eu.sqooss.core.AlitheiaCoreService;
+import eu.sqooss.impl.service.scheduler.DependencyManager;
 
 /**
  * Interface for the scheduler.
@@ -59,9 +59,12 @@ public interface Scheduler extends AlitheiaCoreService {
      */
     void enqueue(Set<Job> jobs) throws SchedulerException;
     
+    @Deprecated
+	public void enqueueNoDependencies(Set<Job> jobs) throws SchedulerException;
     /**
      * This method is called, when dependencies of the job \a were changed.
      */
+    @Deprecated
     void jobDependenciesChanged(Job job);
 
     /**
@@ -138,4 +141,10 @@ public interface Scheduler extends AlitheiaCoreService {
      * @throws SchedulerException 
      */
     void resume(Job j, ResumePoint p) throws SchedulerException;
+    
+    /**
+     * Returns the {@link DependencyManager} of this {@link Scheduler}.
+     * @return {@link DependencyManager} - contains the dependencies of the jobs in this schedule
+     */
+	DependencyManager getDependencyManager();
 }

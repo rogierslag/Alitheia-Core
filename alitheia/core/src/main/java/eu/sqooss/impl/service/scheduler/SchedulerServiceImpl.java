@@ -148,6 +148,10 @@ public class SchedulerServiceImpl implements Scheduler {
 				this.enqueue(j);
 			}
 		}
+		for (Iterator<Job> iterator = this.jobsToBeExecuted.iterator(); iterator.hasNext();) {
+			Job job = (Job) iterator.next();
+			System.out.println("Jobs enqueued: " + job.toString() + ", depends on:\n" + job.dependencies() );
+		}
 	}
 
 	@Deprecated
@@ -167,6 +171,8 @@ public class SchedulerServiceImpl implements Scheduler {
 	public void jobDependenciesChanged(Job job) {
 		// for backwards compatibility
 		// does nothing
+		// TODO but it should cause now when a dependencies are changed after enqueuement 
+		// the dependencymanager doesnt knwo about this.
 	}
 
 	@Override
@@ -179,16 +185,17 @@ public class SchedulerServiceImpl implements Scheduler {
 				// this.logger.error("jobs in queue: "+this.jobsToBeExecuted.size());
 				for (Job j : this.jobsToBeExecuted) {
 					if (this.dependencies.canExecute(j)) {
-						// j.callAboutToBeDequeued(this);
+						 j.callAboutToBeDequeued(this);
 						this.stats.removeWaitingJob(j.getClass().toString());
 						this.stats.addRunJob(j);
 						this.jobsToBeExecuted.remove(j);
-						this.logger
-								.error("Took job " + j.getClass().toString());
+						System.out.println("Took job " + j.toString());
 						return j;
 					} else {
-						this.logger.error("Unmatched dependencies for "
-								+ j.dependencies());
+					//	this.logger.error("Unmatched dependencies for "
+								//+ j.dependencies());
+//						System.out.println("Unmatched dependencies for "+j.toString() + " "
+//								+ j.dependencies());
 					}
 				}
 			}
@@ -262,6 +269,36 @@ public class SchedulerServiceImpl implements Scheduler {
 		}
 	}
 
+	@Override
+	public DependencyManager getDependencyManager() {
+		return dependencies;
+	}
+
+	public void jobStateChanged(Job job, Job.State state) {
+		if (logger != null) {
+			logger.debug("Job " + job + " changed to state " + state);
+		}
+
+		if (state == Job.State.Finished) {
+			stats.removeRunJob(job);
+			stats.incFinishedJobs();
+		} else if (state == Job.State.Running) {
+			stats.removeWaitingJob(job.getClass().toString());
+			stats.addRunJob(job);
+		} else if (state == Job.State.Yielded) {
+			stats.removeRunJob(job);
+			stats.addWaitingJob(job.getClass().toString());
+		} else if (state == Job.State.Error) {
+//TODO do something with this failed queue
+//			if (failedQueue.remainingCapacity() == 1)
+//				failedQueue.remove();
+//			failedQueue.add(job);
+
+			stats.removeRunJob(job);
+			stats.addFailedJob(job.getClass().toString());
+		}
+	}
+		
 	// public void enqueue(Job job) throws SchedulerException {
 	// synchronized (this) {
 	// if (logger != null)

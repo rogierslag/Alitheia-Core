@@ -72,10 +72,12 @@ public class BaseWorker  implements WorkerThread, Runnable {
 	     m_processing = true;
 	        while (m_processing) {
 	            try {
+	            	System.out.println("Trying to takeJob");
 	            	// get a job from the scheduler
 	            	Job job = m_scheduler.takeJob();
 	            	
 	            	executeJob(job);
+	            	System.out.println("Done with a job: "+job.toString());
 	            } catch (InterruptedException e) {
 	                // we were interrupted, just try again
 	                continue;
@@ -92,6 +94,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 		Job oldJob = m_job;
 		long time = -1;
 		try {
+			System.out.println("Trying to start a job "+j.toString());
 			m_job = j;
 			if (m_job.state() == Job.State.Yielded) {
 				time = m_job.resume();
