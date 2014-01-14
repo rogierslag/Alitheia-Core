@@ -158,6 +158,16 @@
       <version>1.2</version>
       <scope>compile</scope>
     </dependency>
+    <dependency>
+    	<groupId>org.eclipse.gemini</groupId>
+    	<artifactId>org.eclipse.gemini.blueprint.core</artifactId>
+    	<version>1.0.2.RELEASE</version>
+    </dependency>
+    <dependency>
+    	<groupId>org.eclipse.gemini</groupId>
+    	<artifactId>org.eclipse.gemini.blueprint.mock</artifactId>
+    	<version>1.0.2.RELEASE</version>
+    </dependency>
   </dependencies>
     
   <profiles>
