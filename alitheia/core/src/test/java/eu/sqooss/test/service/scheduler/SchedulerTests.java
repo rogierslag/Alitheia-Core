@@ -7,6 +7,7 @@ import static org.junit.Assert.*;
 import eu.sqooss.core.AlitheiaCore;
 import eu.sqooss.impl.service.scheduler.SchedulerServiceImpl;
 import eu.sqooss.service.scheduler.SchedulerException;
+import eu.sqooss.test.service.scheduler.TestJobObject;
 
 public class SchedulerTests {
     

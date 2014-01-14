@@ -102,7 +102,7 @@ public class TestScheduler {
     	TestJobObject tb1 = new TestJobObject(0, null);
     	HashSet<Job> alj = new HashSet<Job>(1);
     	alj.add(tb1);
-    	sched.enqueueNoDependencies(alj);
+    	sched.enqueue(alj);
     	assertEquals(1, sched.getSchedulerStats().getTotalJobs());
     	sched.shutDown();
     	

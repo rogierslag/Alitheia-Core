@@ -43,8 +43,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.eclipse.gemini.blueprint.mock.MockBundleContext;
-import org.eclipse.gemini.blueprint.mock.MockServiceReference;
+//import org.eclipse.gemini.blueprint.mock.MockBundleContext;
+//import org.eclipse.gemini.blueprint.mock.MockServiceReference;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
@@ -171,28 +171,29 @@ public class AlitheiaCore {
     
     /*Create a temp instance to use for testing.*/
     public static AlitheiaCore testInstance() {
-    	instance = new AlitheiaCore(null);
-    	reference = new MockServiceReference();
-    	bundleContext = new MockBundleContext() {
-
-    		public ServiceReference getServiceReference(String clazz) {
-    			return reference;
-    		}
-
-    		public ServiceReference[] getServiceReferences(String clazz, String filter) 
-    				throws InvalidSyntaxException {
-    			return new ServiceReference[] { reference };
-    		}
-    		
-    		public Object getService(ServiceReference ref) {
-    		    if (reference == ref)
-    		       return service;
-    		    return super.getService(ref);
-    		}
-    	};
-
-        instance = new AlitheiaCore(bundleContext);
-        return instance;
+//    	instance = new AlitheiaCore(null);
+//    	reference = new MockServiceReference();
+//    	bundleContext = new MockBundleContext() {
+//
+//    		public ServiceReference getServiceReference(String clazz) {
+//    			return reference;
+//    		}
+//
+//    		public ServiceReference[] getServiceReferences(String clazz, String filter) 
+//    				throws InvalidSyntaxException {
+//    			return new ServiceReference[] { reference };
+//    		}
+//    		
+//    		public Object getService(ServiceReference ref) {
+//    		    if (reference == ref)
+//    		       return service;
+//    		    return super.getService(ref);
+//    		}
+//    	};
+//
+//        instance = new AlitheiaCore(bundleContext);
+//        return instance;
+    	return new AlitheiaCore(null);
     }
     
     /**

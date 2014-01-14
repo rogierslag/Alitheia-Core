@@ -109,6 +109,10 @@ public abstract class Job implements Comparable<Job> {
         return m_worker;
      }
     
+    public boolean equals(Object other) {
+    	return this == other;
+    }
+    
     /**
      * @return The current state of the job.
      */

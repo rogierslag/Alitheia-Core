@@ -67,18 +67,19 @@ public class SchedulerServiceImpl implements Scheduler {
 	private SchedulerStats stats;
 
 	private ExecutorService threadPool;
-	private List<WorkerThreadImpl> tempThreadPool;
+	private List<BaseWorker> tempThreadPool;
 
-	private TreeSet<Job> jobsToBeExecuted;
+	private PriorityQueue<Job> jobsToBeExecuted;
 	private List<Job> failedJobs;
 	private DependencyManager dependencies;
 
 	public SchedulerServiceImpl() {
 		this.stats = new SchedulerStats();
 		this.threadPool = Executors.newFixedThreadPool(1);
-		this.jobsToBeExecuted = new TreeSet<Job>(new JobPriorityComparator());
+		this.jobsToBeExecuted = new PriorityQueue<Job>(10,
+				new JobPriorityComparator());
 		this.dependencies = new DependencyManager();
-		this.tempThreadPool = new ArrayList<WorkerThreadImpl>();
+		this.tempThreadPool = new ArrayList<BaseWorker>();
 	}
 
 	@Override
@@ -86,7 +87,8 @@ public class SchedulerServiceImpl implements Scheduler {
 	public void startExecute(int n) {
 		this.threadPool = Executors.newFixedThreadPool(n);
 		for (int i = 0; i < n; i++) {
-			this.threadPool.execute(new WorkerThreadImpl(this,false));
+			this.threadPool.execute(new BaseWorker(this));
+			this.logger.error("Added ThreadWorker #" + i);
 		}
 	}
 
@@ -111,10 +113,11 @@ public class SchedulerServiceImpl implements Scheduler {
 
 	@Override
 	public void shutDown() {
-		for (WorkerThreadImpl worker : this.tempThreadPool) {
-			worker.interrupt();
+		for (BaseWorker worker : this.tempThreadPool) {
+			worker.stopProcessing();
+			;
 		}
-		this.threadPool.shutdown();
+		this.threadPool.shutdownNow();
 	}
 
 	@Override
@@ -128,15 +131,13 @@ public class SchedulerServiceImpl implements Scheduler {
 			return;
 		}
 		synchronized (this) {
-			if (this.jobsToBeExecuted.contains(job)) {
-				return;
-			}
-
 			for (Job dependency : job.dependencies()) {
 				this.dependencies.add(job, dependency);
 			}
 			job.callAboutToBeEnqueued(this);
 			this.jobsToBeExecuted.add(job);
+			this.stats.incTotalJobs();
+			this.stats.addWaitingJob(job.getClass().toString());
 		}
 	}
 
@@ -149,7 +150,20 @@ public class SchedulerServiceImpl implements Scheduler {
 		}
 	}
 
+	@Deprecated
+	public void enqueueNoDependencies(Set<Job> jobs) throws SchedulerException {
+		this.enqueue(jobs);
+	}
+
+	public void dequeue(Job j) {
+		synchronized (this) {
+			this.jobsToBeExecuted.remove(j);
+			this.stats.removeWaitingJob(j.getClass().toString());
+		}
+	}
+
 	@Override
+	@Deprecated
 	public void jobDependenciesChanged(Job job) {
 		// for backwards compatibility
 		// does nothing
@@ -159,15 +173,26 @@ public class SchedulerServiceImpl implements Scheduler {
 	public Job takeJob() throws InterruptedException {
 		// Loop until a job is available
 		while (true) {
+			// this.logger.error("I really want a job");
+
 			synchronized (this) {
+				// this.logger.error("jobs in queue: "+this.jobsToBeExecuted.size());
 				for (Job j : this.jobsToBeExecuted) {
 					if (this.dependencies.canExecute(j)) {
-						j.callAboutToBeDequeued(this);
+						// j.callAboutToBeDequeued(this);
+						this.stats.removeWaitingJob(j.getClass().toString());
+						this.stats.addRunJob(j);
+						this.jobsToBeExecuted.remove(j);
+						this.logger
+								.error("Took job " + j.getClass().toString());
 						return j;
+					} else {
+						this.logger.error("Unmatched dependencies for "
+								+ j.dependencies());
 					}
 				}
-				Thread.sleep(100);
 			}
+			Thread.sleep(100);
 		}
 	}
 
@@ -187,10 +212,10 @@ public class SchedulerServiceImpl implements Scheduler {
 
 	@Override
 	public void stopExecute() {
-		for (WorkerThreadImpl worker : this.tempThreadPool) {
-			worker.interrupt();
+		for (BaseWorker worker : this.tempThreadPool) {
+			worker.stopProcessing();
 		}
-		this.threadPool.shutdown();
+		this.threadPool.shutdownNow();
 	}
 
 	@Override
@@ -218,7 +243,6 @@ public class SchedulerServiceImpl implements Scheduler {
 	// TODO
 	public boolean createAuxQueue(Job j, Deque<Job> jobs, ResumePoint p)
 			throws SchedulerException {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
@@ -233,7 +257,9 @@ public class SchedulerServiceImpl implements Scheduler {
 
 	@Override
 	public void resume(Job j, ResumePoint p) throws SchedulerException {
-		this.jobsToBeExecuted.add(j);
+		if (j.state() == Job.State.Yielded) {
+			this.jobsToBeExecuted.add(j);
+		}
 	}
 
 	// public void enqueue(Job job) throws SchedulerException {

@@ -3,49 +3,51 @@ package eu.sqooss.impl.service.scheduler;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import eu.sqooss.service.scheduler.Job;
 
 class DependencyManager {
 
-	private HashMap<Job, List<Job>> dependencies;
+	private ConcurrentHashMap<Job, List<Job>> dependencies;
 
 	public DependencyManager() {
-		this.dependencies = new HashMap<Job, List<Job>>();
+		this.dependencies = new ConcurrentHashMap<Job, List<Job>>();
 	}
 
 	public void add(Job parent, Job child) {
-		synchronized (dependencies) {
-
-			List<Job> existingDependencies = this.dependencies.get(parent);
-			if (existingDependencies == null) {
-				existingDependencies = new ArrayList<Job>();
-			}
-			existingDependencies.add(child);
-			this.dependencies.put(parent, existingDependencies);
+		List<Job> existingDependencies = this.dependencies.get(parent);
+		if (existingDependencies == null) {
+			existingDependencies = new ArrayList<Job>();
 		}
+		existingDependencies.add(child);
+		this.dependencies.put(parent, existingDependencies);
 	}
 
 	public void remove(Job parent, Job child) {
-		synchronized (dependencies) {
+		List<Job> existingDependencies = this.dependencies.get(parent);
+		if (existingDependencies == null) {
+			existingDependencies = new ArrayList<Job>();
+		}
+		existingDependencies.remove(child);
+		this.dependencies.put(parent, existingDependencies);
+	}
 
-			List<Job> existingDependencies = this.dependencies.get(parent);
-			if (existingDependencies == null) {
-				existingDependencies = new ArrayList<Job>();
-			}
-			existingDependencies.remove(child);
-			this.dependencies.put(parent, existingDependencies);
-		}
-	}
-	
 	public void remove(Job parent) {
-		synchronized (dependencies) {
-			this.dependencies.remove(parent);
-		}
+		this.dependencies.remove(parent);
 	}
-	
+
 	public boolean canExecute(Job j) {
-		List<Job> dependencies = this.dependencies.get(j);
-		return dependencies == null || dependencies.isEmpty(); 
+		List<Job> deps = this.dependencies.get(j);
+		if (deps == null) {
+			return true;
+		} else {
+			for (Job job : deps) {
+				if (job.state() != Job.State.Finished) {
+					return false;
+				}
+			}
+			return true;
+		}
 	}
 }

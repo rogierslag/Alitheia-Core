@@ -40,6 +40,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 	@Override
 	public void stopProcessing() {
 		m_processing = false;
+		Thread.currentThread().interrupt();
 		//TODO Make scheduler stop corresponding thread?
 	}
 

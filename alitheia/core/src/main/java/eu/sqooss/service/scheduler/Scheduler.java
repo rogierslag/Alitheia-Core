@@ -134,7 +134,7 @@ public interface Scheduler extends AlitheiaCoreService {
     void yield(Job j, ResumePoint p) throws SchedulerException;
     
     /**
-     * Pause the execution of a Job.  
+     * Starts the execution of a Job.  
      * @throws SchedulerException 
      */
     void resume(Job j, ResumePoint p) throws SchedulerException;
