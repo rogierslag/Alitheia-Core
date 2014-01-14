@@ -136,27 +136,7 @@ public abstract class Job implements Comparable<Job> {
      */
     @Deprecated
     public final synchronized void addDependency(Job other) throws SchedulerException {
-        // Dependencies of jobs can ony be changed before the job is queued.
-        // Otherwise, race conditions would occur in which it would be undefined
-        // if the dependency is applied or not.
-        if ( (state() != State.Created) && (state() != State.Yielded) ) {
-        	throw new SchedulerException("Job dependencies cannot be added after the job has been queued.");
-        }
-
-        // Don't allow circular dependencies
-        if( other.dependsOn(this) || (this==other) ) {
-            throw new SchedulerException("Job dependencies are not allowed to be cyclic.");
-        }
-
-        if (m_dependencies == null)
-            m_dependencies = new LinkedList<Pair<Job,Job>>();
-        
-        synchronized (m_dependencies) {
-            Pair<Job,Job> newDependency = new Pair<Job,Job>(other, this);
-            m_dependencies.add(newDependency);
-            other.addDependee(this);
-        }
-        callDependenciesChanged();
+    	DependencyManager.getInstance().addDependency(this, other);
     }
     
     /**
@@ -165,19 +145,7 @@ public abstract class Job implements Comparable<Job> {
      */
     @Deprecated
     public final void removeDependency(Job other) {
-        if (m_dependencies == null)
-            return;
-        synchronized(m_dependencies) {
-            List<Pair<Job,Job>> doomed = new LinkedList<Pair<Job,Job>>();
-            for (Pair<Job,Job> p: m_dependencies ) {
-                if ( (p.first == other) && (p.second == this) ) {
-                    doomed.add(p);
-                    removeDependee(other);
-                }
-            }
-            m_dependencies.removeAll(doomed);
-        }
-        callDependenciesChanged();
+    	DependencyManager.getInstance().removeDependency(this, other);
     }
 
     /**
@@ -188,37 +156,12 @@ public abstract class Job implements Comparable<Job> {
      */
     @Deprecated
     public final boolean dependsOn(Job other) {
-//    	return m_scheduler.getDependencyManager().dependOnEachOther(this, other);
-        if (m_dependencies == null)
-            return false;
-        synchronized(m_dependencies) {
-            for (Pair<Job,Job> p: m_dependencies ) {
-                if ( (p.first == other) && (p.second == this) ) {
-                    return true;
-                } else if ( (p.second == this) && p.first.dependsOn(other)) {
-                    return true;
-                }
-            }
-            return false;
-        }
-    }
-    
-    @Deprecated
-    private final synchronized void addDependee(Job other) {
-        if (m_dependees == null)
-            m_dependees = new ArrayList<Job>();
-        synchronized (m_dependees) {
-            m_dependees.add(other);
-        }
+    	return m_scheduler.getDependencyManager().dependsOn(this, other);
     }
     
     @Deprecated
     private final synchronized void removeDependee(Job other) {
-        if (m_dependees == null)
-            return;
-        synchronized (m_dependees) {
-            m_dependees.remove(other);
-        }
+    	System.out.println("Remove Dependee is deprecated");
     }
     
     /**
@@ -415,40 +358,6 @@ public abstract class Job implements Comparable<Job> {
         }
 
         m_state = s;
-
-        if ((m_state == State.Finished || m_state == State.Error) && m_dependencies != null) {
-            // remove the job from the dependency list
-            List<Job> unblockedJobs = new LinkedList<Job>();
-            synchronized (m_dependencies) {
-                List<Pair<Job,Job>> doomed = new LinkedList<Pair<Job,Job>>();
-                for (Pair<Job,Job> p: m_dependencies) {
-                    if (p.first == this) {
-                        doomed.add(p);
-                        unblockedJobs.add(p.second);
-                    }
-                }
-                m_dependencies.removeAll(doomed);
-            }
-            /* tell all jobs depending on the now finished on to forward that
-             * to the scheduler
-             */
-            for (Job j: unblockedJobs) {
-                j.callDependenciesChanged();
-            }
-        }
-        
-        if ((m_state == State.Finished || m_state == State.Error) && m_dependees != null) {
-            synchronized (m_dependees) {
-                for (Job p: m_dependees) {
-                    p.callDependenciesChanged();
-                }
-                m_dependees.clear();
-            }
-        }
-
-        if (m_scheduler != null) {
-//            m_scheduler.jobStateChanged(this, s);
-        }
         
         stateChanged(m_state);
         fireStateChangedEvent();
@@ -472,9 +381,7 @@ public abstract class Job implements Comparable<Job> {
      */
     @Deprecated
     protected final void callDependenciesChanged() {
-        if (m_scheduler != null) {
-            m_scheduler.jobDependenciesChanged(this);
-        }
+    	System.out.println("callDependenciesChanged() has been deprecated");
     }
 
     /**

@@ -1,14 +1,12 @@
 package eu.sqooss.impl.service.scheduler;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 import eu.sqooss.service.scheduler.Job;
-import eu.sqooss.service.util.Pair;
+import eu.sqooss.service.scheduler.SchedulerException;
+import eu.sqooss.service.scheduler.Job.State;
 
 public class DependencyManager {
 
@@ -19,7 +17,7 @@ public class DependencyManager {
 	 * A private constructor, the {@link DependencyManager} should be initialized 
 	 * with {@link DependencyManager#getInstance()}
 	 */
-	DependencyManager() { //TODO make this private again.. 
+	private DependencyManager() {  
 		this.dependencies = new ConcurrentHashMap<Job, List<Job>>();
 	}
 	
@@ -52,7 +50,6 @@ public class DependencyManager {
 	 * @param Job parent
 	 * @return boolean 
 	 */
-	//TODO check performance impact.
 	public boolean dependsOn(Job child, Job parent){
         synchronized(dependencies) {
         	//Get the dependencies of the child
@@ -61,8 +58,6 @@ public class DependencyManager {
         		return false;
         	for (Job j: deps) {
         		//Check if they contain the parent, or if they contain a job that is dependent on parent (aka dependent by proxy)
-        		//TODO this assumes that Java doesnt evaluate the second part of 
-        		//the OR if the first parts is true
 				return j.equals(parent) || dependsOn(j, parent); 
 			}
             return false;
@@ -75,7 +70,6 @@ public class DependencyManager {
 	 * @param h
 	 * @return boolean
 	 */
-	//TODO This should still be updated
 	public boolean canExecute(Job j){
 		List<Job> deps = this.dependencies.get(j);
 		if (deps == null) {
@@ -98,8 +92,16 @@ public class DependencyManager {
 	 * 
 	 * @param child
 	 * @param parent
+	 * @throws SchedulerException 
 	 */
-	public void addDependency(Job child, Job parent){
+	public synchronized void  addDependency(Job child, Job parent) throws SchedulerException{
+		if ( (child.state() != State.Created) && (child.state() != State.Yielded) ) {
+        	throw new SchedulerException("Job dependencies cannot be added after the job has been queued.");
+        }
+		if( dependsOn(parent,child) || (child==parent) ) {
+            throw new SchedulerException("Job dependencies are not allowed to be cyclic.");
+        }
+		
 		List<Job> deps; 
 		if((deps = this.dependencies.get(child)) ==null){
 			deps = new LinkedList<Job>();
@@ -119,7 +121,6 @@ public class DependencyManager {
 	public boolean removeDependency(Job from, Job which){
 		List<Job> deps; 
 		if((deps = this.dependencies.get(from)) ==null){
-			//TODO add log? that this dependenciy didnt even exist in the first place?
 			return false;
 		}
 		return deps.remove(which);
@@ -163,36 +164,36 @@ public class DependencyManager {
 		return this.dependencies.get(from);
 	}
 
-	/**
-	 * Returns whether {@link Job} a depends on {@link Job} b
-	 * @param A Job
-	 * @param B Job
-	 * @return
-	 */
-	public boolean dependOnEachOther(Job a, Job b) {
-		List<Job> deps = this.dependencies.get(a);
-		return deps.contains(b);
-	}
-	
-	public void add(Job parent, Job child) {
-		List<Job> existingDependencies = this.dependencies.get(parent);
-		if (existingDependencies == null) {
-			existingDependencies = new ArrayList<Job>();
-		}
-		existingDependencies.add(child);
-		this.dependencies.put(parent, existingDependencies);
-	}
-
-	public void remove(Job parent, Job child) {
-		List<Job> existingDependencies = this.dependencies.get(parent);
-		if (existingDependencies == null) {
-			existingDependencies = new ArrayList<Job>();
-		}
-		existingDependencies.remove(child);
-		this.dependencies.put(parent, existingDependencies);
-	}
-
-	public void remove(Job parent) {
-		this.dependencies.remove(parent);
-	}
+//	/**
+//	 * Returns whether {@link Job} a depends on {@link Job} b
+//	 * @param A Job
+//	 * @param B Job
+//	 * @return
+//	 */
+//	public boolean dependOnEachOther(Job a, Job b) {
+//		List<Job> deps = this.dependencies.get(a);
+//		return deps.contains(b);
+//	}
+//	
+//	public void add(Job parent, Job child) {
+//		List<Job> existingDependencies = this.dependencies.get(parent);
+//		if (existingDependencies == null) {
+//			existingDependencies = new ArrayList<Job>();
+//		}
+//		existingDependencies.add(child);
+//		this.dependencies.put(parent, existingDependencies);
+//	}
+//
+//	public void remove(Job parent, Job child) {
+//		List<Job> existingDependencies = this.dependencies.get(parent);
+//		if (existingDependencies == null) {
+//			existingDependencies = new ArrayList<Job>();
+//		}
+//		existingDependencies.remove(child);
+//		this.dependencies.put(parent, existingDependencies);
+//	}
+//
+//	public void remove(Job parent) {
+//		this.dependencies.remove(parent);
+//	}
 }

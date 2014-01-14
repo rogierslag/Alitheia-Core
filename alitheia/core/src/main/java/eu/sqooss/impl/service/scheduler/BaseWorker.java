@@ -41,7 +41,6 @@ public class BaseWorker  implements WorkerThread, Runnable {
 	public void stopProcessing() {
 		m_processing = false;
 		Thread.currentThread().interrupt();
-		//TODO Make scheduler stop corresponding thread?
 	}
 
 	/**
@@ -59,7 +58,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 	 */
 	@Override
 	public void takeJob(Job job) throws SchedulerException {
-		m_scheduler.takeJob(job); //TODO make sure SchedulerService implements starting the temporary worker
+		m_scheduler.startOneShotWorker(job); 
 	}
 
 	
@@ -108,7 +107,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 			e.printStackTrace();
 			// no error handling needed here, the job
 			// itself takes care of that.
-		} finally { //TODO Finally runs wether the try trows an exception or not right? So m_job ALWAYS gets reverted to oldJob? THis breaks the function of executed job..
+		} finally { 
 		    if (perfLog) {
 		        AlitheiaCore.getInstance().getLogManager().
 		            createLogger("sqooss.jobtimer").

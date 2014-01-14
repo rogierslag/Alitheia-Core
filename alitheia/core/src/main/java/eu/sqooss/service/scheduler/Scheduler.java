@@ -37,6 +37,7 @@ import java.util.Deque;
 import java.util.Set;
 
 import eu.sqooss.core.AlitheiaCoreService;
+import eu.sqooss.impl.service.scheduler.BaseWorker;
 import eu.sqooss.impl.service.scheduler.DependencyManager;
 
 /**
@@ -44,7 +45,7 @@ import eu.sqooss.impl.service.scheduler.DependencyManager;
  *
  * @author Mirko Boehm
  */
-public interface Scheduler extends AlitheiaCoreService {
+public interface Scheduler extends AlitheiaCoreService, JobStateListener {
 
     /**
      * Queue a job.
@@ -147,4 +148,16 @@ public interface Scheduler extends AlitheiaCoreService {
      * @return {@link DependencyManager} - contains the dependencies of the jobs in this schedule
      */
 	DependencyManager getDependencyManager();
+
+	/**
+	 * Start a new thread that executes one job and one job only.
+	 * @param job
+	 */
+	void startOneShotWorker(Job job);
+	
+	/**
+	 * Remove a worker from the temporary threadpool
+	 * @param bw
+	 */
+	void deallocateFromThreadpool(BaseWorker bw);
 }

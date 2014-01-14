@@ -71,19 +71,18 @@ public class SchedulerServiceImpl implements Scheduler {
 
 	private PriorityQueue<Job> jobsToBeExecuted;
 	private List<Job> failedJobs;
-	private DependencyManager dependencies;
+	private DependencyManager dependencyManager;
 
 	public SchedulerServiceImpl() {
 		this.stats = new SchedulerStats();
 		this.threadPool = Executors.newFixedThreadPool(1);
 		this.jobsToBeExecuted = new PriorityQueue<Job>(10,
 				new JobPriorityComparator());
-		this.dependencies = new DependencyManager();
+		this.dependencyManager = DependencyManager.getInstance();
 		this.tempThreadPool = new ArrayList<BaseWorker>();
 	}
 
 	@Override
-	// TODO the constructor for WorkerThreadImpl fixen
 	public void startExecute(int n) {
 		this.threadPool = Executors.newFixedThreadPool(n);
 		for (int i = 0; i < n; i++) {
@@ -131,13 +130,15 @@ public class SchedulerServiceImpl implements Scheduler {
 			return;
 		}
 		synchronized (this) {
-			for (Job dependency : job.dependencies()) {
-				this.dependencies.add(job, dependency);
-			}
+//			TODO this is already done in de DM
+//			for (Job dependency : job.dependencies()) {
+//				this.dependencies.add(job, dependency);
+//			}
 			job.callAboutToBeEnqueued(this);
 			this.jobsToBeExecuted.add(job);
 			this.stats.incTotalJobs();
 			this.stats.addWaitingJob(job.getClass().toString());
+			job.addJobStateListener(this);
 		}
 	}
 
@@ -150,7 +151,7 @@ public class SchedulerServiceImpl implements Scheduler {
 		}
 		for (Iterator<Job> iterator = this.jobsToBeExecuted.iterator(); iterator.hasNext();) {
 			Job job = (Job) iterator.next();
-			System.out.println("Jobs enqueued: " + job.toString() + ", depends on:\n" + job.dependencies() );
+			System.out.println("Jobs enqueued: " + job.toString() + ", depends on:\n" + dependencyManager.getDependency(job));
 		}
 	}
 
@@ -171,8 +172,6 @@ public class SchedulerServiceImpl implements Scheduler {
 	public void jobDependenciesChanged(Job job) {
 		// for backwards compatibility
 		// does nothing
-		// TODO but it should cause now when a dependencies are changed after enqueuement 
-		// the dependencymanager doesnt knwo about this.
 	}
 
 	@Override
@@ -184,10 +183,8 @@ public class SchedulerServiceImpl implements Scheduler {
 			synchronized (this) {
 				// this.logger.error("jobs in queue: "+this.jobsToBeExecuted.size());
 				for (Job j : this.jobsToBeExecuted) {
-					if (this.dependencies.canExecute(j)) {
+					if (this.dependencyManager.canExecute(j)) {
 						 j.callAboutToBeDequeued(this);
-						this.stats.removeWaitingJob(j.getClass().toString());
-						this.stats.addRunJob(j);
 						this.jobsToBeExecuted.remove(j);
 						System.out.println("Took job " + j.toString());
 						return j;
@@ -211,7 +208,7 @@ public class SchedulerServiceImpl implements Scheduler {
 					"Job %s is not enqueued in scheduler %s", job, this));
 		}
 		synchronized (this) {
-			this.dependencies.remove(job);
+			this.jobsToBeExecuted.remove(job);
 			job.callAboutToBeDequeued(this);
 			return job;
 		}
@@ -271,14 +268,14 @@ public class SchedulerServiceImpl implements Scheduler {
 
 	@Override
 	public DependencyManager getDependencyManager() {
-		return dependencies;
+		return dependencyManager;
 	}
 
 	public void jobStateChanged(Job job, Job.State state) {
 		if (logger != null) {
 			logger.debug("Job " + job + " changed to state " + state);
 		}
-
+		System.out.println("\n\n## Job " + job + " changed to state " + state);
 		if (state == Job.State.Finished) {
 			stats.removeRunJob(job);
 			stats.incFinishedJobs();
@@ -297,6 +294,18 @@ public class SchedulerServiceImpl implements Scheduler {
 			stats.removeRunJob(job);
 			stats.addFailedJob(job.getClass().toString());
 		}
+	}
+
+	@Override
+	public void startOneShotWorker(Job job) {
+		OneShotWorker osw = new OneShotWorker(this, job);
+		this.tempThreadPool.add(osw);
+		osw.run();
+	}
+	
+	@Override
+	public void deallocateFromThreadpool(BaseWorker bw){
+		this.tempThreadPool.remove(bw);
 	}
 		
 	// public void enqueue(Job job) throws SchedulerException {
