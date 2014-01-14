@@ -54,22 +54,11 @@ public interface Scheduler extends AlitheiaCoreService {
     void enqueue(Job job) throws SchedulerException;
 
     /**
-     * Queue lots of jobs without checking their dependencies.
-     */
-    void enqueueNoDependencies(Set<Job> jobs) throws SchedulerException;
-    
-    /**
      * Queue lots of jobs as a block. Execution won't start until all
      * jobs are queued.  
      */
-    void enqueueBlock(List<Job> jobs) throws SchedulerException;
+    void enqueue(Set<Job> jobs) throws SchedulerException;
     
-    /**
-     * This method is called, when the state of the job \a job changes to 
-     * \a state.
-     */
-    void jobStateChanged(Job job, Job.State state);
-
     /**
      * This method is called, when dependencies of the job \a were changed.
      */
@@ -123,12 +112,7 @@ public interface Scheduler extends AlitheiaCoreService {
     /**
      * Get the list of threads working on jobs of this scheduler.
      */
-    WorkerThread[] getWorkerThreads();
-    
-    /**
-     * Starts a temporary worker thread handling exactly one job.
-     */
-    void startOneShotWorkerThread();
+//    WorkerThread[] getWorkerThreads();
     
     /**
      * Create an auxiliary queue tied to a specific job, that allows the
@@ -149,4 +133,9 @@ public interface Scheduler extends AlitheiaCoreService {
      */
     void yield(Job j, ResumePoint p) throws SchedulerException;
     
+    /**
+     * Starts the execution of a Job.  
+     * @throws SchedulerException 
+     */
+    void resume(Job j, ResumePoint p) throws SchedulerException;
 }

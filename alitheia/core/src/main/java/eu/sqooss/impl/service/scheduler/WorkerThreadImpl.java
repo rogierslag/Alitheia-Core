@@ -46,6 +46,7 @@ import eu.sqooss.service.scheduler.WorkerThread;
  *
  * @author Christoph Schleifenbaum
  */
+@Deprecated
  class WorkerThreadImpl extends Thread implements WorkerThread {
     private static final String PERF_LOG_PROPERTY = "eu.sqooss.log.perf";
     
