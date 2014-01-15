@@ -9,21 +9,31 @@ public class OneShotWorker extends BaseWorker {
 	private Job job;
 
 	/**
-	 * Creates a new OneShotWorker
-	 * 
-	 * @param s
+	 * Creates a new OneShotWorker that takes
+	 * the first executable job from the the 
+	 * scheduler, executes it, and terminates.
+	 * @param s - {@link Scheduler}
 	 */
 	public OneShotWorker(Scheduler s) {
 		super(s);
 	}
 
-	public OneShotWorker(Scheduler s, Job job) {
+	/**
+	 * Creates a new OneShotWorker that executes the
+	 * given {@link Job} j that has to be in scheduler s.
+	 * It terminates after the job is finished
+	 * @param s - {@link Scheduler}
+	 * @param j - {@link Job}
+	 */
+	public OneShotWorker(Scheduler s, Job j) {
 		super(s);
-		this.job = job;
+		this.job = j;
 	}
 
 	/**
-	 * Only one job is executed by this worker
+	 * The job that is either given at the creation of {@link OneShotWorker}
+	 * or is taken from the scheduler in this method is executed.
+	 * The {@link OneShotWorker} is terminated afterwards.
 	 */
 	@Override
 	public void run() {
@@ -37,11 +47,15 @@ public class OneShotWorker extends BaseWorker {
 			// get a job from the scheduler
 			super.executeJob(this.job);
 		} catch (InterruptedException e) {
+			this.m_scheduler.deallocateFromThreadpool(this);
+			Thread.currentThread().interrupt();
 			// we were interrupted so this workes finishes
 		} catch (SchedulerException e) {
 			//No valid job was received so this worker is killed.
 			this.m_scheduler.deallocateFromThreadpool(this);
 			Thread.currentThread().interrupt();
+		}finally{
+			this.m_scheduler.deallocateFromThreadpool(this);
 		}
 	}
 }
