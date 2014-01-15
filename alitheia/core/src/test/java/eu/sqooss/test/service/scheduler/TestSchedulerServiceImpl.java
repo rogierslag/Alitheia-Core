@@ -1,8 +1,6 @@
 package eu.sqooss.test.service.scheduler;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertSame;
+import static org.junit.Assert.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -27,6 +25,9 @@ import org.osgi.framework.ServiceReference;
 
 import eu.sqooss.core.AlitheiaCore;
 import eu.sqooss.impl.service.logging.LoggerImpl;
+import eu.sqooss.impl.service.scheduler.BaseWorker;
+import eu.sqooss.impl.service.scheduler.DependencyManager;
+import eu.sqooss.impl.service.scheduler.OneShotWorker;
 import eu.sqooss.impl.service.scheduler.SchedulerServiceImpl;
 import eu.sqooss.service.logging.Logger;
 import eu.sqooss.service.scheduler.Job;
@@ -54,6 +55,7 @@ public class TestSchedulerServiceImpl {
     	TestJobObject j1 = new TestJobObject(20, "Test");
         sched.enqueue(j1);
         sched.enqueue(j1);
+        sched.shutDown();
     }
     @Test
     public void testEnqueueMultipleJobs() throws SchedulerException {
@@ -68,7 +70,7 @@ public class TestSchedulerServiceImpl {
         sched.enqueue(j3);
         //
         assertEquals(3, sched.getSchedulerStats().getTotalJobs());
- 	  
+        sched.shutDown();
     }
     
     @Test
@@ -85,9 +87,10 @@ public class TestSchedulerServiceImpl {
         assertEquals(j3, sched.takeJob());
         assertEquals(j1, sched.takeJob());
         assertEquals(j2, sched.takeJob());
- 	  
+        sched.shutDown();
     }
     
+//    TODO
 //    Dont test here because it belongs to Job? And only concerns private fields in SchedulerServiceImpl?
 //    @Test 
 //    public void testJobDependenciesAfterEnqueue() throws SchedulerException{
@@ -132,6 +135,7 @@ public class TestSchedulerServiceImpl {
         sched.dequeue(j1);
         assertEquals("Job dequeued thus state is created", Job.State.Created, j1.state() );
         assertEquals("Job not dequeued thus state is queued", Job.State.Queued , j2.state());
+        sched.shutDown();
     }
     
     @Test(expected=SchedulerException.class)
@@ -158,17 +162,18 @@ public class TestSchedulerServiceImpl {
     	assertEquals("Correct job from the queue", job ,j2);
     	job = sched.takeJob(j3);
     	assertEquals("Correct job from the queue", job ,j3);
-    	
+        sched.shutDown();
     }
     
     @Test
-    public void testExecutingJobs() {
+    public void testExecutingJobs() throws InterruptedException {
     	SchedulerServiceImpl sched = new SchedulerServiceImpl();
     	assertEquals("Check not running", false,  sched.isExecuting());
     	sched.startExecute(2);
     	assertEquals("Check running", true,  sched.isExecuting());
-    	sched.stopExecute();
+    	sched.shutDown();
     	assertEquals("Check not running", false,  sched.isExecuting());
+        sched.shutDown();
     }
 
     @Test
@@ -176,7 +181,7 @@ public class TestSchedulerServiceImpl {
     	SchedulerServiceImpl sched = new SchedulerServiceImpl();
     	sched.stopExecute();
     	assertEquals("Check not running", false,  sched.isExecuting());
-    	
+        sched.shutDown();
     }
     
     @Test
@@ -184,6 +189,7 @@ public class TestSchedulerServiceImpl {
     	SchedulerServiceImpl sched = new SchedulerServiceImpl();
     	SchedulerStats stats  = sched.getSchedulerStats();
     	assertSame(SchedulerStats.class, stats.getClass());
+        sched.shutDown();
     }
     
     @Test
@@ -205,10 +211,10 @@ public class TestSchedulerServiceImpl {
             } catch (InterruptedException e) {}
             
         assertEquals("Test 3 failing jobs", 3, sched.getSchedulerStats().getFailedJobs());
-        sched.stopExecute();
-    	
+        sched.shutDown();
     }
     
+    // TODO deze lijkt afhankelijk van een DB connectie?
     @Test
     public void testGetFailedQueued() throws SchedulerException{
     	SchedulerServiceImpl sched = new SchedulerServiceImpl();
@@ -228,11 +234,11 @@ public class TestSchedulerServiceImpl {
     		} catch (InterruptedException e) {}
     	
     	Job[] expectedArray = {job1, job2, job3};
-    	ArrayList<Job> expList = new ArrayList<Job>(Arrays.asList(expectedArray));
-    	ArrayList<Job> actualList = new ArrayList<Job>(Arrays.asList(sched.getFailedQueue()));
-    	assertEquals(true, expList.containsAll(actualList));
-    	sched.stopExecute();
-    }
+    	List<Job> expList = new ArrayList<Job>(Arrays.asList(expectedArray));
+    	List<Job> actualList = new ArrayList<Job>(Arrays.asList(sched.getFailedQueue()));
+    	assertEquals(expList, actualList); // TODO functionality not implemented?
+        sched.shutDown();
+   }
     
     @Test
     public void testAmountofWorkerThreads() throws SchedulerException{
@@ -240,7 +246,8 @@ public class TestSchedulerServiceImpl {
     	sched.startExecute(2);
     	assertEquals(true, sched.isExecuting()); //Fails because of getWorkerThreads, cast not properly implemented
     	
-    }	
+        sched.shutDown();
+        }	
     
     @Test
     public void testSetInitParams(){
@@ -267,34 +274,97 @@ public class TestSchedulerServiceImpl {
     	Logger l = new LoggerImpl("Logger 2"); 
     	sched.setInitParams(bundleContext, l);
     	//There is not really a way of checking that this is properly processed.
-    }
+        sched.shutDown();
+        }
     	
     @Test
-    public void testStartOneShotWorkerThread() throws SchedulerException{
+    public void testStartOneShotWorker() throws SchedulerException{
     	SchedulerServiceImpl sched = new SchedulerServiceImpl();
-    	FailingJob job1 = new FailingJob("J1");
-    	FailingJob job2 = new FailingJob("J2");
-    	FailingJob job3 = new FailingJob("J3");
-    	sched.enqueue(job1);
-    	sched.enqueue(job2);
-    	sched.enqueue(job3);
+    	Job job1 = new TestJobObject(0,"J1");
+    	Job job2 = new TestJobObject(0,"J1");
     	assertEquals("Zero finished jobs", 0, sched.getSchedulerStats().getFinishedJobs());
-//    	sched.startOneShotWorkerThread();
-//    	try {
-//					Thread.sleep(500);
-//				} catch (InterruptedException e) {}
-//    	
-//    	// known bug
-//    	assertEquals("One finished job", 1, sched.getSchedulerStats().getFinishedJobs()); //Fails for unknown reason, but at least the boolean oneshot is incorrect
+    	sched.enqueue(job1);
+    	sched.startOneShotWorker(job1);
+    	try {
+    		//Take a short nap
+    		Thread.sleep(10);
+    	} catch (Exception e) {}
+    	assertEquals("One finished job", 1, sched.getSchedulerStats().getFinishedJobs());
+    	sched.enqueue(job2);
+    	assertEquals("One waiting jobs",1,sched.getSchedulerStats().getWaitingJobs());
+        sched.startOneShotWorker(job2);
+    	assertEquals("No waiting jobs",0,sched.getSchedulerStats().getWaitingJobs());
+        sched.shutDown();
+    }
+
+    @Test
+    public void testOneShotWorker() throws SchedulerException{
+    	SchedulerServiceImpl sched = new SchedulerServiceImpl();
+    	Job job1 = new TestJobObject(0,"J1");
+    	sched.enqueue(job1);
+    	BaseWorker wb = new OneShotWorker(sched);
+    	wb.run();
+    	assertEquals("No waiting jobs",0,sched.getSchedulerStats().getWaitingJobs());
+        sched.shutDown();
     }
     
-
+    @Test
+    public void testBaseWorker() throws SchedulerException{
+    	SchedulerServiceImpl sched = new SchedulerServiceImpl();
+    	Job job1 = new TestJobObject(0,"J1");
+    	sched.enqueue(job1);
+    	BaseWorker wb = new BaseWorker(sched);
+    	assertEquals("One waiting jobs",1,sched.getSchedulerStats().getWaitingJobs());
+        wb.takeJob(job1);
+    	assertEquals("No waiting jobs",0,sched.getSchedulerStats().getWaitingJobs());
+    	
+    	wb = new BaseWorker(sched);
+    	Thread x = new Thread(wb);
+    	x.start();
+    	wb.stopProcessing();
+    	assertTrue(x.isAlive());
+        sched.shutDown();
+    }
+    @Test
+    public void testStartOneShotWorkerWithDependencies() throws SchedulerException{
+    	SchedulerServiceImpl sched = new SchedulerServiceImpl();
+    	Job job1 = new TestJobObject(10,"J1");
+    	Job job2 = new TestJobObject(3,"J1");
+    	assertEquals("Zero finished jobs", 0, sched.getSchedulerStats().getFinishedJobs());
+    	DependencyManager dm = sched.getDependencyManager();
+    	dm.addDependency(job1, job2);
+    	sched.enqueue(job1);
+    	sched.enqueue(job2);
+    	assertEquals("Two waiting jobs",2,sched.getSchedulerStats().getWaitingJobs());
+        sched.startExecute(1);
+        try {
+    		//Take a short nap
+    		Thread.sleep(10);
+    	} catch (Exception e) {}
+    	sched.startOneShotWorker(job1);
+    	assertEquals("No waiting jobs",0,sched.getSchedulerStats().getWaitingJobs());
+        sched.shutDown();
+    }
     @Test
     public void testStartUp()  {
     	SchedulerServiceImpl sched = new SchedulerServiceImpl(); 
     	sched.startUp();
-    	int numThreads = 2 * Runtime.getRuntime().availableProcessors();
-//    	assertEquals("Equal amount of threads", numThreads, sched.getWorkerThreads().length); //Fails because getWorkerThreads is not propery implemented
+    	assertTrue(sched.isExecuting());
+    	sched.shutDown();
+    }
+    
+    @Test
+    public void testShutDown() throws SchedulerException  {
+    	SchedulerServiceImpl sched = new SchedulerServiceImpl(); 
+    	assertFalse(sched.isExecuting());
+    	TestJobObject j1 = new TestJobObject(10, "J1");
+    	TestJobObject j2 = new TestJobObject(2, "J2");
+        sched.enqueue(j1);
+        sched.enqueue(j2);
+        sched.startOneShotWorker(j1);
+        sched.startOneShotWorker(j2);
+        
+    	sched.shutDown();
     }
     
     @Test
@@ -302,7 +372,7 @@ public class TestSchedulerServiceImpl {
     	SchedulerServiceImpl sched = new SchedulerServiceImpl();
     	sched.startExecute(1);
     	TestJobObject j1 = new TestJobObject(100, "J1");
-    	TestJobObject j2 = new TestJobObject(20, "J2");
+    	TestJobObject j2 = new TestJobObject(2, "J2");
         sched.enqueue(j1);
         sched.enqueue(j2);
         Set<Job> jobs = new HashSet<Job>();
@@ -314,12 +384,13 @@ public class TestSchedulerServiceImpl {
 		};
         boolean result = sched.createAuxQueue(j1, jobs, p); //Fails because not properly checked for logger.
         assertEquals("No jobs listed so returns false", false, result);
+        sched.shutDown();
     }
 
     @Test
     public void testCreateAuxQueue() throws SchedulerException  {
     	SchedulerServiceImpl sched = new SchedulerServiceImpl(); 
-    	TestJobObject j1 = new TestJobObject(50, "J1");
+    	TestJobObject j1 = new TestJobObject(100, "J1");
     	TestJobObject j2 = new TestJobObject(20, "J2");
     	TestJobObject j3 = new TestJobObject(20, "J3");
     	sched.enqueue(j1);
@@ -333,14 +404,20 @@ public class TestSchedulerServiceImpl {
     		}
     	};
     	sched.startExecute(1);
-    	while(sched.getSchedulerStats().getRunningJobs()<1){
+    	System.out.println(sched.getSchedulerStats().getRunningJobs());
+		while(sched.getSchedulerStats().getRunningJobs()!=1){
+			System.out.println(sched.getSchedulerStats().getRunningJobs());
+			
     		try {
-				Thread.sleep(100);
+    			System.out.println(sched.getSchedulerStats().getRunningJobs());
+				Thread.sleep(1);
 			} catch (InterruptedException e) {}
     	}
     	
-    	boolean result = sched.createAuxQueue(j1, jobs, p);
-    	assertEquals("Jobs given so should return true", true,result);
+		System.out.println("XX");
+		boolean result = sched.createAuxQueue(j1, jobs, p);
+		System.out.println("XX");
+		assertEquals("Jobs given so should return true", true,result);
     	assertEquals("Two jobs added", 3, sched.getSchedulerStats().getTotalJobs());
 
     	//Check if depencies are added correctly

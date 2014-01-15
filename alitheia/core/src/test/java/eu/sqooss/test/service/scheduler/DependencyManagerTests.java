@@ -2,7 +2,9 @@ package eu.sqooss.test.service.scheduler;
 
 import static org.junit.Assert.*;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -27,12 +29,13 @@ public class DependencyManagerTests {
 	@Test
 	public final void testGetInstance() {
 		DependencyManager dm = DependencyManager.getInstance();
-		assertTrue("getInstance should return the samen object",
-				dm == DependencyManager.getInstance());
-		assertTrue("getInstance(true) should return a different object", 
-				dm != DependencyManager.getInstance(true));
-		assertTrue("getInstance(false) should return the same object", 
-				dm != DependencyManager.getInstance(false));
+		assertSame("getInstance should return the samen object",
+				dm, DependencyManager.getInstance());
+		assertSame("getInstance(false) should return the same object", 
+				dm ,DependencyManager.getInstance(false));
+		assertNotSame("getInstance(true) should return a different object", 
+				dm, DependencyManager.getInstance(true));
+		
 	}
 
 	@Test
@@ -50,7 +53,7 @@ public class DependencyManagerTests {
 		d.addDependency(j3, j4);
 		d.addDependency(j5, j1);
 		assertTrue("j1 depends on j4 by proxy", d.dependsOn(j1, j4));
-		assertTrue("j1 does not depend on j5", d.dependsOn(j1, j5));
+		assertFalse("j1 does not depend on j5", d.dependsOn(j1, j5));
 		assertTrue("j5 does depend on j1", d.dependsOn(j5, j1));
 		
 	}
@@ -72,8 +75,8 @@ public class DependencyManagerTests {
 		sched.startExecute(1);
 		j2.waitForFinished();
 		synchronized (sched) {
-			assertTrue("Check that j1 is not finished yet", j1.state() != Job.State.Finished);
-			assertTrue("j2 is now finished", j2.state() == Job.State.Finished);
+			assertFalse("Check that j1 is not finished yet", Job.State.Finished == j1.state());
+			assertEquals("j2 is now finished", Job.State.Finished, j2.state() );
 			assertTrue("J1 can run now since j2 is finished", d.canExecute(j1));
 		}
 		j1.waitForFinished();
@@ -101,6 +104,21 @@ public class DependencyManagerTests {
 		
 		j1.mockState(Job.State.Running);
 		d.addDependency(j1, j2); //Should throw exception
+		fail("An exception should have been thrown");
+	}
+	
+	@Test
+	public final void testAddDependencyOnYieldedJob() throws SchedulerException{
+		TestJobObject j1 = new TestJobObject(1, "j1");
+		TestJobObject j2 = new TestJobObject(1, "j2");
+		DependencyManager d = DependencyManager.getInstance(true);
+		
+		List<Job> deps = new ArrayList<Job>(1);
+		deps.add(j2);
+		
+		j1.mockState(Job.State.Yielded);
+		d.addDependency(j1, j2);
+		assertEquals("The dependency was added to the yielded job",deps,d.getDependency(j1));
 	}
 	
 	@Test(expected=SchedulerException.class)
@@ -111,6 +129,7 @@ public class DependencyManagerTests {
 		
 		j1.mockState(Job.State.Finished);
 		d.addDependency(j1, j2); //Should throw exception
+		fail("An exception should have been thrown");
 	}
 	
 	@Test(expected=SchedulerException.class)
@@ -121,6 +140,7 @@ public class DependencyManagerTests {
 		
 		j1.mockState(Job.State.Error);
 		d.addDependency(j1, j2); //Should throw exception
+		fail("An exception should have been thrown");
 	}
 	
 	@Test(expected=SchedulerException.class)
@@ -131,6 +151,7 @@ public class DependencyManagerTests {
 		d.addDependency(j1, j2);
 		j1.mockState(Job.State.Error);
 		d.addDependency(j2, j1); //Should throw exception no cyclic deps
+		fail("An exception should have been thrown");
 	}
 	
 	@Test
@@ -144,18 +165,6 @@ public class DependencyManagerTests {
 		assertTrue("J1 should depend on j2 now", d.dependsOn(j1,j2));
 		d.removeDependency(j1, j2);
 		assertFalse("J1 should not depend on j2 anymore", d.dependsOn(j1,j2));
-		
-		
-	}
-
-	@Test
-	public final void testAddDependee() {
-//		fail("Not yet implemented"); // TODO
-	}
-
-	@Test
-	public final void testRemoveDependee() {
-//		fail("Not yet implemented"); // TODO
 	}
 
 	@Test
@@ -174,22 +183,60 @@ public class DependencyManagerTests {
 
 	@Test
 	public final void testAdd() {
-		fail("Not yet implemented"); // TODO
+		fail("Not yet implemented"); // TODO Add lijkt me wel getest door de klasse heen
 	}
 
 	@Test
-	public final void testRemoveJobJob() {
-		fail("Not yet implemented"); // TODO
+	public final void testRemoveJobJob() throws SchedulerException {
+		DependencyManager dm = DependencyManager.getInstance(true);
+		Job j1 = new TestJobObject(0, "j1");
+		Job j2 = new TestJobObject(0, "j2");
+		Job j3 = new TestJobObject(0, "j3");
+		
+		List<Job> deps = new ArrayList<Job>(3);
+		deps.add(j2);
+		deps.add(j3);
+		
+		dm.addDependency(j1, j2);
+		dm.addDependency(j1, j3);
+		assertEquals(deps,dm.getDependency(j1));
+		
+		dm.removeDependency(j1, j2);
+		deps.remove(j2);
+		assertEquals(deps,dm.getDependency(j1));
 	}
 
 	@Test
 	public final void testRemoveJob() {
-		fail("Not yet implemented"); // TODO
+		fail("Not yet implemented"); // TODO wat wil je hier doen
 	}
 
-	@Test
-	public final void testDependOnEachOther() {
-		fail("Not yet implemented"); // TODO
+	@Test(expected=SchedulerException.class)
+	public final void testDependOnEachOther() throws SchedulerException {
+		DependencyManager dm = DependencyManager.getInstance(true);
+		Job j1 = new TestJobObject(0, "j1");
+		Job j2 = new TestJobObject(0, "j2");
+		Job j3 = new TestJobObject(0, "j3");
+		Job j4 = new TestJobObject(0, "j4");
+		Job j5 = new TestJobObject(0, "j5");
+		
+		dm.addDependency(j1, j2);
+		dm.addDependency(j2, j3);
+		dm.addDependency(j3, j4);
+		dm.addDependency(j4, j5);
+		dm.addDependency(j5, j1);
+		
+		fail("Exception not thrown, cyclic dependency"); // TODO
+	}
+	
+	@Test(expected=SchedulerException.class)
+	public final void testDependOnEachOtherParentIsChild() throws SchedulerException {
+		DependencyManager dm = DependencyManager.getInstance(true);
+		Job j1 = new TestJobObject(0, "j1");
+		assertSame(j1,j1);
+		dm.addDependency(j1, j1);
+		
+		fail("Exception not thrown, cyclic dependency"); // TODO
 	}
 
 }

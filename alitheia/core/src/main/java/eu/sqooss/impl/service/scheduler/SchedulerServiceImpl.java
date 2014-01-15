@@ -48,6 +48,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import org.osgi.framework.BundleContext;
 
@@ -70,7 +71,7 @@ public class SchedulerServiceImpl implements Scheduler {
 	private List<BaseWorker> tempThreadPool;
 
 	private PriorityQueue<Job> jobsToBeExecuted;
-	private List<Job> failedJobs;
+	private List<Job> failedJobs = new ArrayList<Job>();
 	private DependencyManager dependencyManager;
 
 	/**
@@ -89,7 +90,8 @@ public class SchedulerServiceImpl implements Scheduler {
 	 * Force the start of a {@link Scheduler} specifying the number of threads
 	 * to be used with n.
 	 * 
-	 * @param n - the number of threads to use in the threadpool.
+	 * @param n
+	 *            - the number of threads to use in the threadpool.
 	 */
 	@Override
 	public void startExecute(int n) {
@@ -128,11 +130,16 @@ public class SchedulerServiceImpl implements Scheduler {
 	 */
 	@Override
 	public void shutDown() {
+		System.out.println(this.tempThreadPool.size());
 		for (BaseWorker worker : this.tempThreadPool) {
 			worker.stopProcessing();
-			;
 		}
 		this.threadPool.shutdownNow();
+		try {
+			this.threadPool.awaitTermination(15, TimeUnit.SECONDS);
+		} catch (InterruptedException e) {
+
+		}
 	}
 
 	/**
@@ -199,6 +206,7 @@ public class SchedulerServiceImpl implements Scheduler {
 	 */
 	public void dequeue(Job j) {
 		synchronized (this) {
+			j.callAboutToBeDequeued(this);
 			this.jobsToBeExecuted.remove(j);
 			this.stats.removeWaitingJob(j.getClass().toString());
 		}
@@ -230,10 +238,10 @@ public class SchedulerServiceImpl implements Scheduler {
 						this.jobsToBeExecuted.remove(j);
 						return j;
 					} else {
-						if(this.logger != null){
+						if (this.logger != null) {
 							this.logger.debug("Unmatched dependencies for "
 									+ this.dependencyManager.getDependency(j));
-							
+
 						}
 					}
 				}
@@ -253,15 +261,15 @@ public class SchedulerServiceImpl implements Scheduler {
 	 */
 	@Override
 	public synchronized Job takeJob(Job job) throws SchedulerException {
-		
+
 		if (job == null || job.state() == Job.State.Finished
 				|| !this.jobsToBeExecuted.contains(job)) {
 			throw new SchedulerException(String.format(
 					"Job %s is not enqueued in scheduler %s", job, this));
 		}
-			this.jobsToBeExecuted.remove(job);
-			job.callAboutToBeDequeued(this);
-			return job;
+		this.jobsToBeExecuted.remove(job);
+		job.callAboutToBeDequeued(this);
+		return job;
 	}
 
 	/**
@@ -283,12 +291,7 @@ public class SchedulerServiceImpl implements Scheduler {
 	@Override
 	// TODO testen
 	public boolean isExecuting() {
-		if (this.threadPool instanceof ThreadPoolExecutor) {
-			return ((ThreadPoolExecutor) this.threadPool).getActiveCount() > 0;
-		} else {
-			System.out.println("damnit");
-			return false;
-		}
+		return ((ThreadPoolExecutor) this.threadPool).getActiveCount() > 0;
 	}
 
 	/**
@@ -314,12 +317,14 @@ public class SchedulerServiceImpl implements Scheduler {
 	@Override
 	public boolean createAuxQueue(Job j, Set<Job> jobs, ResumePoint p)
 			throws SchedulerException {
-		if (jobs.isEmpty() && logger != null) { // add by Joost
-			logger.warn("Empty job queue passed to createAuxQueue(). Ignoring request");
+		if (jobs.isEmpty() ) {
+			if ( logger != null) {
+				logger.warn("Empty job queue passed to createAuxQueue(). Ignoring request");
+			}
 			return false;
 		}
 
-		j.yield(p);
+		j.yield(p); // TODO Yield loopt in een cirkeltje rond?
 		for (Job job : jobs) {
 			this.dependencyManager.addDependency(j, job);
 			enqueue(job);
@@ -352,6 +357,7 @@ public class SchedulerServiceImpl implements Scheduler {
 	public void startOneShotWorker(Job job) {
 		OneShotWorker osw = new OneShotWorker(this, job);
 		this.tempThreadPool.add(osw);
+		System.out.println("started worker");
 		osw.run();
 	}
 

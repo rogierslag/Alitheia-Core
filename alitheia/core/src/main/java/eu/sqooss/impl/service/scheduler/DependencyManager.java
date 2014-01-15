@@ -1,5 +1,6 @@
 package eu.sqooss.impl.service.scheduler;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,10 +38,11 @@ public class DependencyManager {
 	 * @return the current {@link DependencyManager} or a new one if forced
 	 */
 	public static DependencyManager getInstance(boolean force){
-		if(instance == null || force){
-			instance = new DependencyManager();
+		if( force ){
+			return new DependencyManager();
+		} else {
+			return  getInstance();
 		}
-		return instance;
 	}
 	
 	/**
@@ -53,11 +55,14 @@ public class DependencyManager {
         synchronized(dependencies) {
         	//Get the dependencies of the child
         	List<Job> deps = dependencies.get(child);
+        	System.out.println(deps);
         	if(deps == null)
         		return false;
         	for (Job j: deps) {
         		//Check if they contain the parent, or if they contain a job that is dependent on parent (aka dependent by proxy)
-				return j.equals(parent) || dependsOn(j, parent); 
+				if( j.equals(parent) || dependsOn(j, parent)) {
+					return true; 
+				} 
 			}
             return false;
         }
@@ -107,6 +112,7 @@ public class DependencyManager {
 		}
 		deps.add(parent);
 		this.dependencies.put(child, deps);
+		System.out.println(this.dependencies);
 	}
 	
 	/**
@@ -154,7 +160,12 @@ public class DependencyManager {
 	 * @return Returns the list of dependencies of From or null if there are none.
 	 */
 	public List<Job> getDependency(Job from){
-		return this.dependencies.get(from);
+		List<Job> deps;
+		if ( ( deps = this.dependencies.get(from)) != null ) {
+			return deps;
+		} else {
+			return new ArrayList<Job>(0);
+		}
 	}
 
 }

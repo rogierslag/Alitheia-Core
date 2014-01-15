@@ -45,9 +45,7 @@ public class OneShotWorker extends BaseWorker {
 				while(!DependencyManager.getInstance().canExecute(this.job)){//wait untill the dependencies are met
 					Thread.sleep(100);
 				}
-				
 			}
-
 			// get a job from the scheduler
 			super.executeJob(this.job);
 		} catch (InterruptedException e) {
@@ -58,7 +56,7 @@ public class OneShotWorker extends BaseWorker {
 			//No valid job was received so this worker is killed.
 			this.m_scheduler.deallocateFromThreadpool(this);
 			Thread.currentThread().interrupt();
-		}finally{
+		} finally {
 			this.m_scheduler.deallocateFromThreadpool(this);
 		}
 	}

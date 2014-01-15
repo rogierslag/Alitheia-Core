@@ -60,29 +60,6 @@ public class TestSchedulerStats {
 	}
 	
 	@Test
-	public void TestThreads() {
-		SchedulerStats ss = new SchedulerStats();
-		assertEquals(0,ss.getWorkerThreads());
-		assertEquals(0, ss.getIdleWorkerThreads());
-		
-		ss.incIdleWorkerThreads();
-		assertEquals(0,ss.getWorkerThreads());
-		assertEquals(1, ss.getIdleWorkerThreads());
-		
-		ss.decIdleWorkerThreads();
-		assertEquals(0,ss.getWorkerThreads());
-		assertEquals(0, ss.getIdleWorkerThreads());
-		
-		ss.incWorkerThreads();
-		assertEquals(1,ss.getWorkerThreads());
-		assertEquals(0, ss.getIdleWorkerThreads());
-		
-		ss.decWorkerThreads();
-		assertEquals(0,ss.getWorkerThreads());
-		assertEquals(0, ss.getIdleWorkerThreads());
-	}
-	
-	@Test
 	public void TestFailedJobs() {
 		SchedulerStats ss = new SchedulerStats();
 		assertEquals(0,ss.getFailedJobs());

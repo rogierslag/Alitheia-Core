@@ -40,7 +40,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 	@Override
 	public void stopProcessing() {
 		m_processing = false;
-		Thread.currentThread().interrupt();
+//		Thread.currentThread().interrupt();
 	}
 
 	/**
@@ -79,7 +79,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 	            	System.out.println("Done with a job: "+job.toString());
 	            } catch (InterruptedException e) {
 	                // we were interrupted, just try again
-	                continue;
+	            	m_processing = false;
 	            }
 	        }
 	}

@@ -52,10 +52,6 @@ public class SchedulerStats implements JobStateListener {
 	private long waitingJobs = 0;
 	// the number of jobs currently running
 	private long runningJobs = 0;
-	// the total number of threads available for scheduling
-	private long workerThreads = 0;
-	// the number of threads being idle at the moment
-	private long idleWorkerThreads = 0;
 	// the number of jobs which failed
 	private long failedJobs = 0;
 	// Classname->Failed Jobs
@@ -76,22 +72,6 @@ public class SchedulerStats implements JobStateListener {
 
 	public synchronized void incFinishedJobs() {
 		finishedJobs++;
-	}
-
-	public synchronized void incWorkerThreads() {
-		workerThreads++;
-	}
-
-	public synchronized void decWorkerThreads() {
-		workerThreads--;
-	}
-
-	public synchronized void incIdleWorkerThreads() {
-		idleWorkerThreads++;
-	}
-
-	public synchronized void decIdleWorkerThreads() {
-		idleWorkerThreads--;
 	}
 
 	public synchronized void addFailedJob(String classname) {
@@ -147,14 +127,6 @@ public class SchedulerStats implements JobStateListener {
 
 	public long getRunningJobs() {
 		return runningJobs;
-	}
-
-	public long getWorkerThreads() {
-		return workerThreads;
-	}
-
-	public long getIdleWorkerThreads() {
-		return idleWorkerThreads;
 	}
 
 	public long getFailedJobs() {

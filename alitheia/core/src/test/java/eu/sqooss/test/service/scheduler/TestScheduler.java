@@ -28,15 +28,6 @@ public class TestScheduler {
     		// Yeah this blows. But is works
     	}
     }
-    
-    @Test
-    public void TestExecutionThreads() throws Exception {
-    	sched = new SchedulerServiceImpl();
-        assertEquals(0,sched.getSchedulerStats().getWorkerThreads());
-        sched.startExecute(2);
-        assertEquals(2,sched.getSchedulerStats().getWorkerThreads());
-        sched.shutDown();
-    }
 
     @Test(expected=SchedulerException.class)
     public void TestCircularDependency1() throws Exception {

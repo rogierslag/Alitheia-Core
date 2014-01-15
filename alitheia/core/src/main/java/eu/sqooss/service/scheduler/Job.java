@@ -172,7 +172,7 @@ public abstract class Job implements Comparable<Job> {
      */
     @Deprecated
     public final boolean dependsOn(Job other) {
-    	return m_scheduler.getDependencyManager().dependsOn(this, other);
+    	return DependencyManager.getInstance().dependsOn(this, other);
     }
     
     /**

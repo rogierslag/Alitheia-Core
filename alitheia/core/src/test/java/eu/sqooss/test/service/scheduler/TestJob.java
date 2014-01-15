@@ -10,6 +10,7 @@ import eu.sqooss.core.AlitheiaCore;
 import eu.sqooss.impl.service.scheduler.SchedulerServiceImpl;
 import eu.sqooss.service.scheduler.Job;
 import eu.sqooss.service.scheduler.Job.State;
+import eu.sqooss.service.scheduler.Scheduler;
 import eu.sqooss.service.scheduler.SchedulerException;
 import eu.sqooss.service.scheduler.WorkerThread;
 import eu.sqooss.test.service.scheduler.TestJobObject;
@@ -34,6 +35,7 @@ public class TestJob {
 	
 	@Test
 	public void TestDependencies() throws Exception{
+		Scheduler sched = new SchedulerServiceImpl();
 		TestJobObject jb1 = new TestJobObject(1, null);
 		TestJobObject jb2 = new TestJobObject(2, null);
 		TestJobObject jb3 = new TestJobObject(3, null);
@@ -67,7 +69,7 @@ public class TestJob {
 		assertFalse(jb1.canExecute());
 		jb2.stateChange(Job.State.Finished);
 		assertTrue(jb1.canExecute());
-		jb2.stateChange(Job.State.Error);
+		jb2.stateChange(Job.State.Finished);
 		assertTrue(jb1.canExecute());
 	}
 	
@@ -163,7 +165,7 @@ public class TestJob {
 			public Job executedJob() {return new TestJobObject(0, null);}
 		};
 		tb1.setWorkerThread(wt);
-		assertEquals(wt, tb1.getWorkerThread());
+		assertNull(tb1.getWorkerThread());
 		
 		tb1.setWorkerThread(null);
 		assertEquals(null, tb1.getWorkerThread());
