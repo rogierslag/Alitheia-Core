@@ -42,6 +42,10 @@ public class OneShotWorker extends BaseWorker {
 				this.job = m_scheduler.takeJob();
 			} else {
 				this.job = m_scheduler.takeJob(this.job);
+				while(!DependencyManager.getInstance().canExecute(this.job)){//wait untill the dependencies are met
+					Thread.sleep(100);
+				}
+				
 			}
 
 			// get a job from the scheduler
