@@ -6,7 +6,6 @@ import java.util.LinkedList;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.Mockito.*;
 
 import eu.sqooss.core.AlitheiaCore;
 import eu.sqooss.impl.service.scheduler.DependencyManager;
