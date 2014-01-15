@@ -93,12 +93,14 @@ public class BaseWorker  implements WorkerThread, Runnable {
 		Job oldJob = m_job;
 		long time = -1;
 		try {
-			System.out.println("Trying to start a job "+j.toString());
-			m_job = j;
-			if (m_job.state() == Job.State.Yielded) {
-				time = m_job.resume();
-			} else { 
-			    time = m_job.execute();
+			synchronized (j) {
+				System.out.println("Trying to start a job "+j.toString() + "from" + this.toString());
+				m_job = j;
+				if (m_job.state() == Job.State.Yielded) {
+					time = m_job.resume();
+				} else { 
+					time = m_job.execute();
+				}
 			}
 		} catch (ClassCastException cce) { 
 		    AlitheiaCore.getInstance().getLogManager().createLogger(

@@ -45,6 +45,7 @@ import java.lang.InterruptedException;
 import eu.sqooss.core.AlitheiaCore;
 import eu.sqooss.impl.service.scheduler.BaseWorker;
 import eu.sqooss.impl.service.scheduler.DependencyManager;
+import eu.sqooss.impl.service.scheduler.OneShotWorker;
 import eu.sqooss.impl.service.scheduler.SchedulerServiceImpl;
 import eu.sqooss.service.util.Pair;
 
@@ -287,33 +288,35 @@ public abstract class Job implements Comparable<Job> {
     public final void waitForFinished() {
     	try {
             synchronized (this) {
-                // if this method is running inside of a WorkerThread
-                // we try to pass the job we're waiting for to the thread.
-                if (Thread.currentThread() instanceof WorkerThread) {
-                    WorkerThread t = (WorkerThread) Thread.currentThread();
-                    t.takeJob(this);
-                } else {
-                    throw new Exception();
-                }
+            	System.out.println("State: "+this.state());
+            	if(this.state() == Job.State.Finished){
+            		return;
+            	}else if(this.state() == Job.State.Queued || this.state() == Job.State.Yielded){
+            		this.m_scheduler.startOneShotWorker(this);
+            	}else if(this.state() == Job.State.Error) {
+            		throw new Exception("The job is unable to be executed, it either ended in error state.");
+            	}else if(this.state() == Job.State.Created) {
+            		throw new Exception("The job is unable to be executed, state was created. It might not be enqueued yet.");
+            	}
+            	
+            	 while (state() != State.Finished) {
+                     if (state() == State.Error) {
+                         return;
+                     }
+                     try {
+                         wait();
+                     } catch (InterruptedException e) {
+                     	e.printStackTrace();
+                     }
+                 }
             }
         } catch (Exception e) {
             // if something went wrong with taking the job
             // ok - we might be stuck...
-            if (m_scheduler.getSchedulerStats().getIdleWorkerThreads() == 0) {
-//                m_scheduler.startOneShotWorkerThread();
-            }
-        }
-        synchronized (this) {
-            while (state() != State.Finished) {
-                if (state() == State.Error) {
-                    return;
-                }
-                try {
-                    wait();
-                } catch (InterruptedException e) {
-                	e.printStackTrace();
-                }
-            }
+        	//TODO check this work properly should
+//            if (m_scheduler.getSchedulerStats().getIdleWorkerThreads() == 0) {
+////                m_scheduler.startOneShotWorkerThread();
+//            }
         }
     }
     /**

@@ -232,8 +232,11 @@ public class SchedulerServiceImpl implements Scheduler {
 						this.jobsToBeExecuted.remove(j);
 						return j;
 					} else {
-						this.logger.debug("Unmatched dependencies for "
-								+ this.dependencyManager.getDependency(j));
+						if(this.logger != null){
+							this.logger.debug("Unmatched dependencies for "
+									+ this.dependencyManager.getDependency(j));
+							
+						}
 					}
 				}
 			}
@@ -251,17 +254,16 @@ public class SchedulerServiceImpl implements Scheduler {
 	 *             when the job is not enqueued in this scheduler
 	 */
 	@Override
-	public Job takeJob(Job job) throws SchedulerException {
+	public synchronized Job takeJob(Job job) throws SchedulerException {
+		
 		if (job == null || job.state() == Job.State.Finished
 				|| !this.jobsToBeExecuted.contains(job)) {
 			throw new SchedulerException(String.format(
 					"Job %s is not enqueued in scheduler %s", job, this));
 		}
-		synchronized (this) {
 			this.jobsToBeExecuted.remove(job);
 			job.callAboutToBeDequeued(this);
 			return job;
-		}
 	}
 
 	/**
