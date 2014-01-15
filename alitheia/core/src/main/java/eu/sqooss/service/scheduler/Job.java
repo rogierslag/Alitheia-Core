@@ -101,8 +101,6 @@ public abstract class Job implements Comparable<Job> {
 
     private Exception m_errorException;
     
-    private WorkerThread m_worker;
-    
     private int restarts = 0;
     
     private ResumePoint resumePoint;

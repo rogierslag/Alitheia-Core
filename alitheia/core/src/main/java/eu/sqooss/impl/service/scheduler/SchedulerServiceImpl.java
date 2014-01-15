@@ -51,8 +51,6 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import org.osgi.framework.BundleContext;
 
-import com.sun.nio.sctp.SctpChannel;
-
 import eu.sqooss.service.logging.Logger;
 import eu.sqooss.service.scheduler.Job;
 import eu.sqooss.service.scheduler.ResumePoint;
