@@ -43,6 +43,7 @@ import java.lang.Comparable;
 import java.lang.InterruptedException;
 
 import eu.sqooss.core.AlitheiaCore;
+import eu.sqooss.impl.service.scheduler.BaseWorker;
 import eu.sqooss.impl.service.scheduler.DependencyManager;
 import eu.sqooss.impl.service.scheduler.SchedulerServiceImpl;
 import eu.sqooss.service.util.Pair;
@@ -83,7 +84,9 @@ public abstract class Job implements Comparable<Job> {
     
     /**
      * List of jobs which depend on this job
+     * @deprecated Dependencies are managed by the {@link DependencyManager}
      */
+    @Deprecated 
     private List<Job> m_dependees;
 
     /**
@@ -103,17 +106,24 @@ public abstract class Job implements Comparable<Job> {
     
     private ResumePoint resumePoint;
     
+    /**
+     * @deprecated {@link WorkerThread} has been replaced with {@link BaseWorker}
+     * this should not be used anymore.
+     * @param worker
+     */
+    @Deprecated
     public void setWorkerThread(WorkerThread worker) {
-    	m_worker = worker;
      }
     
+    /**
+     * @deprecated {@link WorkerThread} has been replaced with {@link BaseWorker}
+     * this should not be used anymore.
+     * @return null
+     */
+    @Deprecated
     public WorkerThread getWorkerThread() {
-        return m_worker;
+        return null;
      }
-    
-    public boolean equals(Object other) {
-    	return this == other;
-    }
     
     /**
      * @return The current state of the job.
@@ -124,6 +134,7 @@ public abstract class Job implements Comparable<Job> {
     
     /**
      * Returns the Scheduler this Job was enqueued to.
+     * @return {@link Scheduler}
      */
     public Scheduler getScheduler() {
     	return m_scheduler;
@@ -133,6 +144,8 @@ public abstract class Job implements Comparable<Job> {
      * Adds a dependency.
      * This job cannot be executed, as long \a other
      * is not finished.
+     * @deprecated This is handled by the {@link DependencyManager} so that
+     * should be used. 
      */
     @Deprecated
     public final synchronized void addDependency(Job other) throws SchedulerException {
@@ -142,6 +155,8 @@ public abstract class Job implements Comparable<Job> {
     /**
      * Removes a dependency.
      * \sa addDependency
+     * @deprecated This is handled by the {@link DependencyManager} so that
+     * should be used. 
      */
     @Deprecated
     public final void removeDependency(Job other) {
@@ -151,6 +166,8 @@ public abstract class Job implements Comparable<Job> {
     /**
      * Look in the {@link DependencyManager} of the {@link SchedulerServiceImpl} to which this
      * job belongs if this job and another depend on each other.
+     * @deprecated This is handled by the {@link DependencyManager} so that
+     * should be used. 
      * @param other the job to check dependency of.
      * @return true, when the job depends on \a other, otherwise false.
      */
@@ -159,9 +176,13 @@ public abstract class Job implements Comparable<Job> {
     	return m_scheduler.getDependencyManager().dependsOn(this, other);
     }
     
+    /**
+     * @deprecated removing a Dependee is no longer necessary since this is
+     * handled by the {@link DependencyManager}.
+     * @param other
+     */
     @Deprecated
     private final synchronized void removeDependee(Job other) {
-    	System.out.println("Remove Dependee is deprecated");
     }
     
     /**
@@ -173,7 +194,7 @@ public abstract class Job implements Comparable<Job> {
     final public long execute() throws Exception {
     	DBService dbs;
     	long timer;
-    	try {
+    	try {//Try to get the DBservice
     		dbs = AlitheiaCore.getInstance().getDBService();
     		timer = System.currentTimeMillis();
     	} catch (Exception e) {
@@ -186,7 +207,6 @@ public abstract class Job implements Comparable<Job> {
             
             /*Idiot/bad programmer proofing*/
             assert (!dbs.isDBSessionActive());  
-            
             if (dbs.isDBSessionActive()) {
                 dbs.rollbackDBSession();
                 setState(State.Error); //No uncommitted sessions are tolerated
@@ -253,21 +273,11 @@ public abstract class Job implements Comparable<Job> {
 
     /**
      * @return All unfinished jobs this job depends on.
+     * @deprecated This is handled by the {@link DependencyManager} now.
      */
     @Deprecated
     public final List<Job> dependencies() {
-        if (m_dependencies == null)
-            return Collections.EMPTY_LIST;
-        
-        List<Job> result = new LinkedList<Job>();
-        synchronized (m_dependencies) {
-            for (Pair<Job,Job> p: m_dependencies) {
-                if (p.second == this) {
-                    result.add(p.first);
-                }
-            }
-        }
-        return result;
+    	return DependencyManager.getInstance().getDependency(this);
     }
 
     /**
@@ -306,21 +316,13 @@ public abstract class Job implements Comparable<Job> {
             }
         }
     }
-
     /**
      * Checks, whether all dependencies are met and the job can be executed.
      * @return true, when all dependencies are met.
+     * @deprecated this is handled by {@link DependencyManager}
      */
     public boolean canExecute() {
-        final List<Job> deps = dependencies();
-        Iterator<Job> it = deps.iterator();
-        while (it.hasNext()) {
-            Job j = it.next();
-            if (j.state() != State.Finished && j.state() != State.Error) {
-                return false;
-            }
-        }
-        return true;
+    	return DependencyManager.getInstance().canExecute(this);
     }
     
     /**
@@ -333,6 +335,7 @@ public abstract class Job implements Comparable<Job> {
 
     /**
      * XXX bogus method, only used for putting it in into a Pair.
+     * @deprecated Since pairs are no longer used this has not necessary.
      */
     public int compareTo(Job other)
     {
@@ -378,10 +381,11 @@ public abstract class Job implements Comparable<Job> {
     /**
      * If the job is queued to a scheduler, this methods tells the scheduler,
      * that the job's dependencies have changed.
+     * @deprecated since {@link DependencyManager} handled all dependencies this call
+     * is not necessary.
      */
     @Deprecated
     protected final void callDependenciesChanged() {
-    	System.out.println("callDependenciesChanged() has been deprecated");
     }
 
     /**
@@ -412,7 +416,6 @@ public abstract class Job implements Comparable<Job> {
      */
     public void yield(ResumePoint p) throws SchedulerException {
         synchronized (this) {
-            System.err.println(Thread.currentThread().getId() + ":" + toString() + ": State is :" + m_state);
             if (m_state == State.Running) {
                 setState(State.Yielded);
                 this.resumePoint = p;
