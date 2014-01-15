@@ -45,7 +45,7 @@ import eu.sqooss.impl.service.scheduler.DependencyManager;
  *
  * @author Mirko Boehm
  */
-public interface Scheduler extends AlitheiaCoreService, JobStateListener {
+public interface Scheduler extends AlitheiaCoreService {
 
     /**
      * Queue a job.
@@ -129,7 +129,7 @@ public interface Scheduler extends AlitheiaCoreService, JobStateListener {
      * For efficiency reasons, the objects in the provided job queue might be
      * modified.
      */
-    boolean createAuxQueue(Job j, Deque<Job> jobs, ResumePoint p) throws SchedulerException;
+    boolean createAuxQueue(Job j, Set<Job> jobs, ResumePoint p) throws SchedulerException;
     
     /**
      * Pause the execution of a Job.  

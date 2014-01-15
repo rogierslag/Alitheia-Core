@@ -39,8 +39,11 @@ import java.util.List;
 import java.util.Vector;
 
 import org.apache.commons.collections.list.SynchronizedList;
+import org.osgi.framework.BundleContext;
 
-public class SchedulerStats {
+import eu.sqooss.service.logging.Logger;
+
+public class SchedulerStats implements JobStateListener{
     // the number of jobs currently in the scheduler
     private long totalJobs = 0;
     // the number of jobs which were finished
@@ -61,6 +64,7 @@ public class SchedulerStats {
     private HashMap<String, Integer> waitingJobTypes = new HashMap<String, Integer>();
     //Running jobs
     private List<Job> runJobs = new Vector<Job>();
+	private Logger logger;
     
     public synchronized void incTotalJobs() {
         totalJobs++;
@@ -172,4 +176,34 @@ public class SchedulerStats {
         }
         return jobDescr;
     }
+    
+    public void jobStateChanged(Job job, Job.State state) {
+		if (logger != null) {
+			logger.debug("Job " + job + " changed to state " + state);
+		}
+		System.out.println("\n\n## Job " + job + " changed to state " + state);
+		if (state == Job.State.Finished) {
+			removeRunJob(job);
+			incFinishedJobs();
+		} else if (state == Job.State.Running) {
+			removeWaitingJob(job.getClass().toString());
+			addRunJob(job);
+		} else if (state == Job.State.Yielded) {
+			removeRunJob(job);
+			addWaitingJob(job.getClass().toString());
+		} else if (state == Job.State.Error) {
+//TODO do something with this failed queue
+//			if (failedQueue.remainingCapacity() == 1)
+//				failedQueue.remove();
+//			failedQueue.add(job);
+
+			removeRunJob(job);
+			addFailedJob(job.getClass().toString());
+		}
+	}
+
+	public void setInitParams(BundleContext bc, Logger l) {
+		this.logger = l;
+	}
+    
 }
