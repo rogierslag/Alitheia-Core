@@ -6,6 +6,7 @@ import org.junit.Test;
 
 import eu.sqooss.impl.service.scheduler.DependencyManager;
 import eu.sqooss.service.scheduler.Job;
+import eu.sqooss.service.scheduler.SchedulerException;
 
 public class DependencyManagerTests {
 
@@ -15,7 +16,7 @@ public class DependencyManagerTests {
 	}
 
 	@Test
-	public final void testDependsOn() {
+	public final void testDependsOn() throws SchedulerException {
 		Job j1 = new TestJobObject(1, "j1");
 		Job j2 = new TestJobObject(1, "j2");
 		Job j3 = new TestJobObject(1, "j3");
@@ -34,7 +35,7 @@ public class DependencyManagerTests {
 	}
 
 	@Test
-	public final void testAddDependency() {
+	public final void testAddDependency() throws SchedulerException {
 		Job j1 = new TestJobObject(1, "j1");
 		Job j2 = new TestJobObject(1, "j2");
 		DependencyManager d = DependencyManager.getInstance(true);
@@ -43,7 +44,7 @@ public class DependencyManagerTests {
 	}
 
 	@Test
-	public final void testRemoveDependency() {
+	public final void testRemoveDependency() throws SchedulerException {
 		Job j1 = new TestJobObject(1, "j1");
 		Job j2 = new TestJobObject(1, "j2");
 		DependencyManager d = DependencyManager.getInstance(true);
