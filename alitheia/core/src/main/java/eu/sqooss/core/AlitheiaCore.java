@@ -74,8 +74,6 @@ import eu.sqooss.service.tds.TDSService;
 import eu.sqooss.service.updater.UpdaterService;
 import eu.sqooss.service.webadmin.WebadminService;
 
-//import org.eclipse.gemini.blueprint.mock.*;
-
 /**
  * Startup class of the Alitheia framework's core. Its main goal is to
  * initialize all core components and be able to provide them upon request.

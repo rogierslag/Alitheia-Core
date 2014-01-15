@@ -132,12 +132,9 @@ public class DependencyManager {
 	 * @param to
 	 * @param which
 	 */
-	//TODO not sure if this is necessary...
-	// because it is only used to notify them when the dependencies change so that the are switch from
-	// blocked queue to workqueue. These are not used anymore
 	@Deprecated
 	public void addDependee(Job to, Job which){
-		
+		// This doesn't need to do anything anymore since dependencies are checked differently
 	}
 	
 	
@@ -147,12 +144,9 @@ public class DependencyManager {
 	 * @param from
 	 * @param which
 	 */
-	//TODO not sure if this is necessary...
-		// because it is only used to notify them when the dependencies change so that the are switch from
-		// blocked queue to workqueue. These are not used anymore
 		@Deprecated
 	public void removeDependee(Job from, Job which){
-		
+			//This doesn't need to do anything anymore since dependencies are checked differently
 	}
 	
 	/**
@@ -164,36 +158,4 @@ public class DependencyManager {
 		return this.dependencies.get(from);
 	}
 
-//	/**
-//	 * Returns whether {@link Job} a depends on {@link Job} b
-//	 * @param A Job
-//	 * @param B Job
-//	 * @return
-//	 */
-//	public boolean dependOnEachOther(Job a, Job b) {
-//		List<Job> deps = this.dependencies.get(a);
-//		return deps.contains(b);
-//	}
-//	
-//	public void add(Job parent, Job child) {
-//		List<Job> existingDependencies = this.dependencies.get(parent);
-//		if (existingDependencies == null) {
-//			existingDependencies = new ArrayList<Job>();
-//		}
-//		existingDependencies.add(child);
-//		this.dependencies.put(parent, existingDependencies);
-//	}
-//
-//	public void remove(Job parent, Job child) {
-//		List<Job> existingDependencies = this.dependencies.get(parent);
-//		if (existingDependencies == null) {
-//			existingDependencies = new ArrayList<Job>();
-//		}
-//		existingDependencies.remove(child);
-//		this.dependencies.put(parent, existingDependencies);
-//	}
-//
-//	public void remove(Job parent) {
-//		this.dependencies.remove(parent);
-//	}
 }
