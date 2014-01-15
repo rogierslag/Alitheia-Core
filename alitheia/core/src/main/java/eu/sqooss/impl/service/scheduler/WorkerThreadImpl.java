@@ -45,6 +45,7 @@ import eu.sqooss.service.scheduler.WorkerThread;
  * Worker thread executing jobs given by a scheduler.
  *
  * @author Christoph Schleifenbaum
+ * @deprecated This has been replaced by {@link BaseWorker}, use that instead.
  */
 @Deprecated
  class WorkerThreadImpl extends Thread implements WorkerThread {
