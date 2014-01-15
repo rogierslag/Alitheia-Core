@@ -36,6 +36,7 @@ package eu.sqooss.test.service.scheduler;
 import java.util.Random;
 
 import eu.sqooss.service.scheduler.Job;
+import eu.sqooss.service.scheduler.Job.State;
 
 /**
  * This a test job class.
@@ -68,12 +69,19 @@ class TestJobObject extends Job
         return this.priority;
     }
     
-    protected void run() throws Exception {
+    public void mockState(State s) {
+    	this.setState(s);
+    }
+    
+    protected void run() throws Exception  {
         System.out.println("Testjob running!");
         Random r = new Random();
         for (int i = 0; i < n; ++i) {  
         	int j = Math.abs(r.nextInt() % 100);
-        	Thread.sleep(j);
+        	try {
+				Thread.sleep(j);
+			} catch (InterruptedException e) {
+			}
         }
         System.out.println("Testjob finished!");
     }

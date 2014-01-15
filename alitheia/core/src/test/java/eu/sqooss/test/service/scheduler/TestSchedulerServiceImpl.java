@@ -305,7 +305,7 @@ public class TestSchedulerServiceImpl {
     	TestJobObject j2 = new TestJobObject(20, "J2");
         sched.enqueue(j1);
         sched.enqueue(j2);
-        Deque<Job> jobs = new ArrayDeque<Job>();
+        Set<Job> jobs = new HashSet<Job>();
         ResumePoint p = new ResumePoint() { //No implementation available yet
 			@Override
 			public void resume() {
@@ -323,7 +323,7 @@ public class TestSchedulerServiceImpl {
     	TestJobObject j2 = new TestJobObject(20, "J2");
     	TestJobObject j3 = new TestJobObject(20, "J3");
     	sched.enqueue(j1);
-    	Deque<Job> jobs = new ArrayDeque<Job>();
+    	Set<Job> jobs = new HashSet<Job>();
     	jobs.add(j2);
     	jobs.add(j3);
     	ResumePoint p = new ResumePoint() { //No implementation available yet

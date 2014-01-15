@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import eu.sqooss.service.scheduler.Job;
 import eu.sqooss.service.scheduler.SchedulerException;
 import eu.sqooss.service.scheduler.Job.State;
-
 public class DependencyManager {
 
 	private static DependencyManager instance;
