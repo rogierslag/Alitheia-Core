@@ -130,14 +130,15 @@ public class SchedulerServiceImpl implements Scheduler {
 	 */
 	@Override
 	public void shutDown() {
-		System.out.println(this.tempThreadPool.size());
 		for (BaseWorker worker : this.tempThreadPool) {
 			worker.stopProcessing();
+			worker = null;
 		}
 		this.threadPool.shutdownNow();
 		try {
 			this.threadPool.awaitTermination(15, TimeUnit.SECONDS);
 		} catch (InterruptedException e) {
+			e.printStackTrace();
 
 		}
 	}
@@ -234,7 +235,6 @@ public class SchedulerServiceImpl implements Scheduler {
 			synchronized (this) {
 				for (Job j : this.jobsToBeExecuted) {
 					if (this.dependencyManager.canExecute(j)) {
-						j.callAboutToBeDequeued(this);
 						this.jobsToBeExecuted.remove(j);
 						return j;
 					} else {
@@ -268,7 +268,6 @@ public class SchedulerServiceImpl implements Scheduler {
 					"Job %s is not enqueued in scheduler %s", job, this));
 		}
 		this.jobsToBeExecuted.remove(job);
-		job.callAboutToBeDequeued(this);
 		return job;
 	}
 
@@ -324,7 +323,7 @@ public class SchedulerServiceImpl implements Scheduler {
 			return false;
 		}
 
-		j.yield(p); // TODO Yield loopt in een cirkeltje rond?
+		j.yield(p);
 		for (Job job : jobs) {
 			this.dependencyManager.addDependency(j, job);
 			enqueue(job);
@@ -357,7 +356,7 @@ public class SchedulerServiceImpl implements Scheduler {
 	public void startOneShotWorker(Job job) {
 		OneShotWorker osw = new OneShotWorker(this, job);
 		this.tempThreadPool.add(osw);
-		System.out.println("started worker");
+		System.out.println("started one shot worker");
 		osw.run();
 	}
 

@@ -55,7 +55,6 @@ public class DependencyManager {
         synchronized(dependencies) {
         	//Get the dependencies of the child
         	List<Job> deps = dependencies.get(child);
-        	System.out.println(deps);
         	if(deps == null)
         		return false;
         	for (Job j: deps) {
@@ -108,11 +107,10 @@ public class DependencyManager {
 		
 		List<Job> deps; 
 		if((deps = this.dependencies.get(child)) ==null){
-			deps = new LinkedList<Job>();
+			deps = new ArrayList<Job>();
 		}
 		deps.add(parent);
 		this.dependencies.put(child, deps);
-		System.out.println(this.dependencies);
 	}
 	
 	/**

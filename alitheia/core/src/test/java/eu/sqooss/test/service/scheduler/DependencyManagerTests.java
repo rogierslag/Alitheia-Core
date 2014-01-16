@@ -182,11 +182,6 @@ public class DependencyManagerTests {
 	}
 
 	@Test
-	public final void testAdd() {
-		fail("Not yet implemented"); // TODO Add lijkt me wel getest door de klasse heen
-	}
-
-	@Test
 	public final void testRemoveJobJob() throws SchedulerException {
 		DependencyManager dm = DependencyManager.getInstance(true);
 		Job j1 = new TestJobObject(0, "j1");
@@ -204,11 +199,6 @@ public class DependencyManagerTests {
 		dm.removeDependency(j1, j2);
 		deps.remove(j2);
 		assertEquals(deps,dm.getDependency(j1));
-	}
-
-	@Test
-	public final void testRemoveJob() {
-		fail("Not yet implemented"); // TODO wat wil je hier doen
 	}
 
 	@Test(expected=SchedulerException.class)

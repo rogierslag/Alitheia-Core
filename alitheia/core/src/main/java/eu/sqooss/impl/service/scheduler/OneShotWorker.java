@@ -47,7 +47,8 @@ public class OneShotWorker extends BaseWorker {
 				}
 			}
 			// get a job from the scheduler
-			super.executeJob(this.job);
+			System.out.println(this.job.state());
+			this.executeJob(this.job);
 		} catch (InterruptedException e) {
 			this.m_scheduler.deallocateFromThreadpool(this);
 			Thread.currentThread().interrupt();

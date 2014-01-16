@@ -80,6 +80,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 	            } catch (InterruptedException e) {
 	                // we were interrupted, just try again
 	            	m_processing = false;
+	            	continue;
 	            }
 	        }
 	}
@@ -93,7 +94,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 		Job oldJob = m_job;
 		long time = -1;
 		try {
-			synchronized (j) {
+//			synchronized (j) {
 				System.out.println("Trying to start a job "+j.toString() + "from" + this.toString());
 				m_job = j;
 				if (m_job.state() == Job.State.Yielded) {
@@ -101,7 +102,7 @@ public class BaseWorker  implements WorkerThread, Runnable {
 				} else { 
 					time = m_job.execute();
 				}
-			}
+//			}
 		} catch (ClassCastException cce) { 
 		    AlitheiaCore.getInstance().getLogManager().createLogger(
 		            Logger.NAME_SQOOSS_SCHEDULING).error("Job " + j + " is not resumable");
