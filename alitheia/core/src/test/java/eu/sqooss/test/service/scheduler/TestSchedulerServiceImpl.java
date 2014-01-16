@@ -309,6 +309,36 @@ public class TestSchedulerServiceImpl {
     }
     
     @Test
+    public void testOneShotWorkerWithYielded() throws SchedulerException{
+    	SchedulerServiceImpl sched = new SchedulerServiceImpl();
+    	TestJobObject j1 = new TestJobObject(0,"J1");
+    	sched.enqueue(j1);
+    	j1.mockState(Job.State.Running);
+    	ResumePoint p = new ResumePoint() {
+			
+			@Override
+			public void resume() {
+				System.out.println("Resuming this job!");
+			}
+		};
+    	j1.yield(p);
+    	assertEquals(Job.State.Yielded, j1.state());
+    	sched.resume(j1, p);
+    	sched.startOneShotWorker(j1);
+    	
+    	while(j1.state() != Job.State.Finished){
+    		System.out.println(j1.state());
+    		try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+    	}
+    	assertEquals(Job.State.Finished, j1.state());
+    	
+    }
+    @Test
     public void testBaseWorker() throws SchedulerException{
     	SchedulerServiceImpl sched = new SchedulerServiceImpl();
     	Job job1 = new TestJobObject(0,"J1");
@@ -396,12 +426,11 @@ public class TestSchedulerServiceImpl {
     	sched.enqueue(j1);
     	Set<Job> jobs = new HashSet<Job>();
     	jobs.add(j2);
-//    	jobs.add(j3);
+    	jobs.add(j3);
     	ResumePoint p = new ResumePoint() { //No implementation available yet
     		@Override
     		public void resume() {
     			System.out.println("RESUMING>>>>>>......");
-    			//Do nothing
     		}
     	};
     	sched.startExecute(1);
@@ -413,21 +442,21 @@ public class TestSchedulerServiceImpl {
     	
 		boolean result = sched.createAuxQueue(j1, jobs, p);
 		assertEquals("Jobs given so should return true", true,result);
-//    	assertEquals("Two jobs added", 3, sched.getSchedulerStats().getTotalJobs());
+    	assertEquals("Two jobs added", 3, sched.getSchedulerStats().getTotalJobs());
 
     	//Check if depencies are added correctly
     	List<Job> actualDependencies = sched.getDependencyManager().getDependency(j1);
     	assertTrue("Dependencies of job 1 changed", actualDependencies.contains(j2));
-//    	assertTrue("Dependencies of job 1 changed", actualDependencies.contains(j3));
+    	assertTrue("Dependencies of job 1 changed", actualDependencies.contains(j3));
     	
     	//Check if job j1 is yielded
-    	assertEquals("J1 should yield", Job.State.Yielded, j1.state());
-    	
-    	sched.startOneShotWorker(j3);
-    	while(j3.state()!=Job.State.Finished) {
+    	assertEquals("J1 should be yielded", Job.State.Yielded, j1.state());
+    	sched.resume(j1, p);
+//    	sched.startOneShotWorker(j3);
+    	while(j1.state()!=Job.State.Finished) {
     		try {
 				Thread.sleep(10);
-//				System.out.println("not finished");
+				System.out.println("not finished");
 			} catch (InterruptedException e) {}
     	}
     	assertEquals(Job.State.Finished,j1.state());

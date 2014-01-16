@@ -261,7 +261,6 @@ public class SchedulerServiceImpl implements Scheduler {
 	 */
 	@Override
 	public synchronized Job takeJob(Job job) throws SchedulerException {
-
 		if (job == null || job.state() == Job.State.Finished
 				|| !this.jobsToBeExecuted.contains(job)) {
 			throw new SchedulerException(String.format(
@@ -356,7 +355,6 @@ public class SchedulerServiceImpl implements Scheduler {
 	public void startOneShotWorker(Job job) {
 		OneShotWorker osw = new OneShotWorker(this, job);
 		this.tempThreadPool.add(osw);
-		System.out.println("started one shot worker");
 		osw.run();
 	}
 

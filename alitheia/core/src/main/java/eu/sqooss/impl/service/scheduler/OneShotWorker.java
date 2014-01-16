@@ -41,13 +41,14 @@ public class OneShotWorker extends BaseWorker {
 			if (this.job == null) {
 				this.job = m_scheduler.takeJob();
 			} else {
+				if(this.job.state() == Job.State.Yielded){
+				}
 				this.job = m_scheduler.takeJob(this.job);
 				while(!DependencyManager.getInstance().canExecute(this.job)){//wait untill the dependencies are met
 					Thread.sleep(100);
 				}
 			}
 			// get a job from the scheduler
-			System.out.println(this.job.state());
 			this.executeJob(this.job);
 		} catch (InterruptedException e) {
 			this.m_scheduler.deallocateFromThreadpool(this);

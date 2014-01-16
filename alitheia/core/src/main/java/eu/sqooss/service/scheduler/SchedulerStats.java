@@ -155,7 +155,6 @@ public class SchedulerStats implements JobStateListener {
 		if (logger != null) {
 			logger.debug("Job " + job + " changed to state " + state);
 		}
-		System.out.println("\n\n## Job " + job + " changed to state " + state);
 		if (state == Job.State.Finished) {
 			removeRunJob(job);
 			incFinishedJobs();

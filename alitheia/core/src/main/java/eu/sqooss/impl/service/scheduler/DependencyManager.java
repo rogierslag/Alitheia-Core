@@ -80,7 +80,6 @@ public class DependencyManager {
 		} else {
 			for (Job job : deps) {
 				if (job.state() != Job.State.Finished) {
-					System.out.println(job.toString() +" is not finished");
 					return false;
 				}
 			}

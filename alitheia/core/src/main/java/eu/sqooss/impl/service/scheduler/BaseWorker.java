@@ -71,12 +71,10 @@ public class BaseWorker  implements WorkerThread, Runnable {
 	     m_processing = true;
 	        while (m_processing) {
 	            try {
-	            	System.out.println("Trying to takeJob");
 	            	// get a job from the scheduler
 	            	Job job = m_scheduler.takeJob();
 	            	
 	            	executeJob(job);
-	            	System.out.println("Done with a job: "+job.toString());
 	            } catch (InterruptedException e) {
 	                // we were interrupted, just try again
 	            	m_processing = false;
@@ -94,15 +92,12 @@ public class BaseWorker  implements WorkerThread, Runnable {
 		Job oldJob = m_job;
 		long time = -1;
 		try {
-//			synchronized (j) {
-				System.out.println("Trying to start a job "+j.toString() + "from" + this.toString());
 				m_job = j;
 				if (m_job.state() == Job.State.Yielded) {
 					time = m_job.resume();
 				} else { 
 					time = m_job.execute();
 				}
-//			}
 		} catch (ClassCastException cce) { 
 		    AlitheiaCore.getInstance().getLogManager().createLogger(
 		            Logger.NAME_SQOOSS_SCHEDULING).error("Job " + j + " is not resumable");

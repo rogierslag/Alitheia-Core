@@ -208,18 +208,15 @@ public abstract class Job implements Comparable<Job> {
 			if (dbs.isDBSessionActive()) {
 				dbs.rollbackDBSession();
 				setState(State.Error); // No uncommitted sessions are tolerated
-				System.out.println("Job not finished correctly");
 			} else {
 				if (state() != State.Yielded)
 					setState(State.Finished);
-				System.out.println("Job succesfully finished");
 			}
 		} catch (Exception e) {
 
 			if (dbs.isDBSessionActive()) {
 				dbs.rollbackDBSession();
 			}
-			System.out.println("Job ended in error");
 			// In case of an exception, state becomes Error
 			m_errorException = e;
 			setState(State.Error);
@@ -287,7 +284,6 @@ public abstract class Job implements Comparable<Job> {
 	public final void waitForFinished() {
 		try {
 			synchronized (this) {
-				System.out.println("State: " + this.state());
 				if (this.state() == Job.State.Finished) {
 					return;
 				} else if (this.state() == Job.State.Queued
@@ -450,7 +446,6 @@ public abstract class Job implements Comparable<Job> {
 			throw new SchedulerException("Resume point is null");
 
 		try {
-			System.out.println("Resuming the job");
 			setState(State.Running);
 			resumePoint.resume();
 			assert (!dbs.isDBSessionActive());

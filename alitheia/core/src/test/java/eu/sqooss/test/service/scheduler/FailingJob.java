@@ -58,9 +58,7 @@ class FailingJob extends Job
     }
     
     protected void run() throws Exception {
-//        System.out.println("Testjob running!");
         Thread.sleep(100);
-//        System.out.println("Failing the job");
         throw new InterruptedException("Job "+s+" fails!");
     }
 }
